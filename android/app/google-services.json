@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "573358136526",
+    "project_id": "hudor-2a83d",
+    "storage_bucket": "hudor-2a83d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:573358136526:android:810e30f1447f89e207049f",
+        "android_client_info": {
+          "package_name": "com.example.hudor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE5LJdEIn322N4y4l1pCeeP4UygX_XaMU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
