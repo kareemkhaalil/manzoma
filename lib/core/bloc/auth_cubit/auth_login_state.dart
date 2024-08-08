@@ -22,12 +22,13 @@ final class AuthLoginFailure extends AuthLoginState {
 }
 
 final class AuthLoginSuccess extends AuthLoginState {
+  final bool isSuperAdmin;
   final bool isAdmin;
 
-  const AuthLoginSuccess({required this.isAdmin});
+  const AuthLoginSuccess({required this.isSuperAdmin, required this.isAdmin});
 
   @override
-  List<Object> get props => [isAdmin];
+  List<Object> get props => [isSuperAdmin, isAdmin];
 }
 
 final class AuthLoginValidationError extends AuthLoginState {

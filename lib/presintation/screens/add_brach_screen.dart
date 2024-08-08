@@ -1,12 +1,17 @@
+import 'package:bashkatep/core/bloc/admin/add_branch_cubit/add_branch_cubit.dart';
+import 'package:bashkatep/core/utils/validation/validator.dart';
+import 'package:bashkatep/presintation/screens/admin_screen.dart';
+import 'package:bashkatep/presintation/widgets/custom_text_field.dart';
+import 'package:bashkatep/utilies/constans.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hudor/core/bloc/admin/add_branch_cubit/add_branch_cubit.dart';
-import 'package:hudor/core/utils/validation/validator.dart';
-import 'package:hudor/presintation/screens/admin_screen.dart';
-import 'package:hudor/presintation/widgets/custom_text_field.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class AddBranchScreen extends StatelessWidget {
-  const AddBranchScreen({super.key});
+  final String? clientId; // Add clientId to the constructor
+
+  const AddBranchScreen({super.key, this.clientId});
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +19,8 @@ class AddBranchScreen extends StatelessWidget {
     final height = size.height;
     final width = size.width;
     final cubit = context.read<AddBranchCubit>();
+    final clientBox = Hive.box('clientId');
+    final clientId = clientBox.get('clientId');
 
     return Scaffold(
       appBar: AppBar(
@@ -23,7 +30,9 @@ class AddBranchScreen extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const AdminScreen(),
+                builder: (context) => AdminScreen(
+                  clientId: clientId,
+                ),
               ),
             );
           },
@@ -62,7 +71,7 @@ class AddBranchScreen extends StatelessWidget {
                         "إضافة فرع جديد",
                         style: TextStyle(
                           fontSize: 38,
-                          color: Color(0xff3ED9A0),
+                          color: AppColors.colorGreen,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -131,16 +140,19 @@ class AddBranchScreen extends StatelessWidget {
                                 double.parse(cubit.longitudeController.text);
                             cubit.setLocation(latitude, longitude);
 
+                            // تأكد من تمرير clientId كوسيط
                             await cubit.addBranch(
+                              clientId!, // هذا هو معرف العميل، تأكد من أنه يتم تمريره بشكل صحيح
                               cubit.nameController.text,
-                              cubit.location!,
+                              cubit
+                                  .location!, // تأكد من أن cubit.location هو GeoPoint
                               cubit.managerIdController.text,
                               cubit.qrCodeController.text,
                             );
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff3ED9A0),
+                          backgroundColor: AppColors.colorGreen,
                           fixedSize: Size(width * 0.9, height * 0.065),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),

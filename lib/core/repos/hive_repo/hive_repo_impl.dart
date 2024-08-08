@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:hudor/core/repos/hive_repo/hive_repo.dart';
+import 'package:bashkatep/core/repos/hive_repo/hive_repo.dart';
 
 class HiveRepoImpl extends HiveRepo {
   final Box box;

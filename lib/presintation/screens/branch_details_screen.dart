@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hudor/core/models/attendance_model.dart';
-import 'package:hudor/core/models/branches_model.dart'; // Replace with your attendance model
+import 'package:bashkatep/core/models/branches_model.dart'; // Replace with your attendance model
 
 class BranchDetailsScreen extends StatelessWidget {
   final BranchModel branch;
@@ -11,14 +10,16 @@ class BranchDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Attendance Details - ${branch.name}'),
+        title: Text(
+          'Attendance Details - ${branch.name}',
+        ),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Branch ID: ${branch.id}',
+              'Branch ID: ${branch.branchId}',
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             // Implement your attendance data display here

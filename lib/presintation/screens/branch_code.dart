@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:hudor/core/bloc/attend_cubit/qr_cubit.dart';
-import 'package:hudor/core/utils/validation/validator.dart';
-import 'package:hudor/presintation/screens/home_screen.dart';
-import 'package:hudor/presintation/widgets/custom_text_field.dart';
+import 'package:bashkatep/core/bloc/attend_cubit/qr_cubit.dart';
+import 'package:bashkatep/core/utils/validation/validator.dart';
+import 'package:bashkatep/presintation/screens/home_screen.dart';
+import 'package:bashkatep/presintation/widgets/custom_text_field.dart';
+import 'package:bashkatep/utilies/constans.dart';
 
 class BranchCode extends StatelessWidget {
   final bool isCheckIn;
@@ -67,11 +68,11 @@ class BranchCode extends StatelessWidget {
                     if (isCheckIn) {
                       cubit.checkBranchCode(branchCode, id, userName, context);
                     } else {
-                      cubit.checkOut(branchCode, id, userName, context);
+                      cubit.checkBranchCodeCheckOut(branchCode, context);
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff3ED9A0),
+                    backgroundColor: AppColors.colorGreen,
                     fixedSize: Size(width * 0.7, height * 0.07),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

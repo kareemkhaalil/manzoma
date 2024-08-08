@@ -1,21 +1,23 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:bashkatep/core/bloc/super_admin/superAdmin_cubit.dart';
+import 'package:bashkatep/observer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:hudor/core/bloc/admin/add_branch_cubit/add_branch_cubit.dart';
-import 'package:hudor/core/bloc/admin/add_user_cubit/add_user_cubit.dart';
-import 'package:hudor/core/bloc/attend_cubit/attendance_cubit.dart';
-import 'package:hudor/core/bloc/attend_cubit/qr_cubit.dart';
-import 'package:hudor/core/bloc/auth_cubit/auth_login_cubit.dart';
-import 'package:hudor/core/bloc/form_validator/form_validator_cubit.dart';
-import 'package:hudor/firebase_options.dart';
-import 'package:hudor/presintation/screens/splash_screen.dart';
-import 'package:hudor/core/helpers/firebase_helper/firestore_helper.dart';
+import 'package:bashkatep/core/bloc/admin/add_branch_cubit/add_branch_cubit.dart';
+import 'package:bashkatep/core/bloc/admin/add_user_cubit/add_user_cubit.dart';
+import 'package:bashkatep/core/bloc/attend_cubit/attendance_cubit.dart';
+import 'package:bashkatep/core/bloc/attend_cubit/qr_cubit.dart';
+import 'package:bashkatep/core/bloc/auth_cubit/auth_login_cubit.dart';
+import 'package:bashkatep/core/bloc/form_validator/form_validator_cubit.dart';
+import 'package:bashkatep/firebase_options.dart';
+import 'package:bashkatep/presintation/screens/splash_screen.dart';
+import 'package:bashkatep/core/helpers/firebase_helper/firestore_helper.dart';
 
 void main() async {
+  Bloc.observer = MyBlocObserver();
   WidgetsFlutterBinding.ensureInitialized();
   BindingBase.debugZoneErrorsAreFatal = true;
 
@@ -27,13 +29,16 @@ void main() async {
   // Initialize Hive
   await Hive.initFlutter();
 
-  // Open all required boxes
-  await Hive.openBox('token');
-  await Hive.openBox('userName');
-  await Hive.openBox('attendanceRecordId');
-  await Hive.openBox<bool>('isAttend');
-  await Hive.openBox<DateTime>('lastAttendanceTime');
-  await Hive.openBox('userRole'); // Open role box
+  // Open all required boxes if not already open
+  await Future.wait([
+    Hive.openBox('token'),
+    Hive.openBox('userName'),
+    Hive.openBox('attendanceRecordId'),
+    Hive.openBox<bool>('isAttend'),
+    Hive.openBox<DateTime>('lastAttendanceTime'),
+    Hive.openBox('userRole'),
+    Hive.openBox('clientId'),
+  ]);
 
   // Set default value for isAttend box
   var isAttendBox = Hive.box<bool>('isAttend');
@@ -56,36 +61,43 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthLoginCubit>(
+        BlocProvider(
           create: (context) => AuthLoginCubit(
             Hive.box('token'),
             Hive.box('userName'),
-            Hive.box('attendanceRecordId'),
             Hive.box('userRole'), // Pass role box
+            Hive.box('clientId'),
           ),
         ),
-        BlocProvider<FormValidatorCubit>(
+        BlocProvider(
+          create: (context) => AttendanceCubit(),
+        ),
+        BlocProvider(
           create: (context) => FormValidatorCubit(),
         ),
-        BlocProvider<QRScanCubit>(
+        BlocProvider(
           create: (context) => QRScanCubit(),
         ),
-        BlocProvider<AuthAddUserCubit>(
+        BlocProvider(
           create: (context) => AuthAddUserCubit(),
         ),
-        BlocProvider<AddBranchCubit>(
-          create: (context) => AddBranchCubit(firestoreHelper),
+        BlocProvider(
+          create: (context) =>
+              SuperAdminCubit(firestoreHelper: FirestoreHelper())..getClients(),
         ),
-        BlocProvider<AttendanceCubit>(
-          create: (context) => AttendanceCubit(),
+        BlocProvider(
+          create: (context) => AddBranchCubit(firestoreHelper),
         ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'حضور',
+        title: 'الباشكاتب',
         theme: ThemeData(
           textTheme: GoogleFonts.cairoTextTheme(
             Theme.of(context).textTheme,
+          ),
+          scaffoldBackgroundColor: Color(
+            0xffF8FAFF,
           ),
         ),
         home: const SplashScreen(),

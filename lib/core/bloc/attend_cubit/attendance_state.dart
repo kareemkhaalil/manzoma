@@ -11,6 +11,15 @@ class AttendanceInitial extends AttendanceState {}
 
 class AttendanceLoading extends AttendanceState {}
 
+class AttendanceClientDataLoaded extends AttendanceState {
+  final ClientModel clientData;
+
+  AttendanceClientDataLoaded(this.clientData);
+
+  @override
+  List<Object> get props => [clientData];
+}
+
 class AttendanceSuccess extends AttendanceState {
   final String filePath;
   final List<Map<String, dynamic>> attendanceData;
@@ -25,17 +34,22 @@ class AttendanceSuccess extends AttendanceState {
       'AttendanceSuccess { filePath: $filePath, attendanceData: $attendanceData }';
 }
 
+class UserReportsLoaded extends AttendanceState {
+  final List<UserReportModel> user;
+
+  UserReportsLoaded(this.user);
+
+  @override
+  List<Object> get props => [user];
+}
+
 class AttendanceFilteredSuccess extends AttendanceState {
   final List<Map<String, dynamic>> filteredAttendanceData;
 
   const AttendanceFilteredSuccess(this.filteredAttendanceData);
 
   @override
-  List<Object?> get props => [filteredAttendanceData];
-
-  @override
-  String toString() =>
-      'AttendanceFilteredSuccess { filteredAttendanceData: $filteredAttendanceData }';
+  List<Object> get props => [filteredAttendanceData];
 }
 
 class AttendanceFailure extends AttendanceState {
@@ -48,4 +62,42 @@ class AttendanceFailure extends AttendanceState {
 
   @override
   String toString() => 'AttendanceFailure { error: $error }';
+}
+
+class AttendanceExportSuccess extends AttendanceState {
+  final String filePath;
+
+  AttendanceExportSuccess(this.filePath);
+
+  @override
+  List<Object> get props => [filePath];
+}
+
+class AttendanceExportFailure extends AttendanceState {
+  final String error;
+
+  AttendanceExportFailure(this.error);
+
+  @override
+  List<Object> get props => [error];
+}
+
+class UserAttendanceDetailsLoaded extends AttendanceState {
+  final List<AttendanceDetails> attendanceDetails;
+  final String userName;
+
+  const UserAttendanceDetailsLoaded(this.attendanceDetails, this.userName);
+
+  @override
+  List<Object> get props => [attendanceDetails, userName];
+}
+
+class AttendanceDetails {
+  final DateTime checkInTime;
+  final DateTime? checkOutTime;
+
+  AttendanceDetails({
+    required this.checkInTime,
+    this.checkOutTime,
+  });
 }

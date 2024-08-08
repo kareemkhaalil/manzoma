@@ -17,7 +17,7 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json, String docId) {
     return UserModel(
-      employeeId: docId, // استخدم docId كقيمة لـ employeeId
+      employeeId: json['employee_id'] ?? docId,
       name: json['name'] ?? '',
       role: json['role'] ?? '',
       password: json['password'] ?? '',
@@ -35,5 +35,23 @@ class UserModel {
       'userName': userName,
       'email': email,
     };
+  }
+
+  UserModel copyWith({
+    String? employeeId,
+    String? name,
+    String? role,
+    String? password,
+    String? userName,
+    String? email,
+  }) {
+    return UserModel(
+      employeeId: employeeId ?? this.employeeId,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      password: password ?? this.password,
+      userName: userName ?? this.userName,
+      email: email ?? this.email,
+    );
   }
 }

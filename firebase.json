@@ -3,14 +3,16 @@
     "platforms": {
       "android": {
         "default": {
-          "projectId": "hudor-2a83d",
+          "projectId": "bashkatep
+-2a83d",
           "appId": "1:573358136526:android:810e30f1447f89e207049f",
           "fileOutput": "android/app/google-services.json"
         }
       },
       "dart": {
         "lib/firebase_options.dart": {
-          "projectId": "hudor-2a83d",
+          "projectId": "bashkatep
+-2a83d",
           "configurations": {
             "android": "1:573358136526:android:810e30f1447f89e207049f",
             "ios": "1:573358136526:ios:6b16c492699b889107049f",

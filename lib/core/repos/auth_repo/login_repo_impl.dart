@@ -1,7 +1,7 @@
 // import 'package:dartz/dartz.dart';
 // import 'package:dio/dio.dart';
 // import 'package:flutter/material.dart';
-// import 'package:hudor/core/repos/auth_repo/login_repo.dart';
+// import 'package:bashkatep/core/repos/auth_repo/login_repo.dart';
 // import 'package:school_ai/core/params/endpoints.dart';
 // import 'package:school_ai/core/utils/errrors/failure.dart';
 // import 'package:school_ai/core/utils/network/api_services.dart';

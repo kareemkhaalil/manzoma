@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:hudor/core/helpers/firebase_helper/firestore_helper.dart';
-import 'package:hudor/core/models/user_model.dart';
-import 'package:hudor/core/repos/hive_repo/hive_repo.dart';
-import 'package:hudor/core/repos/hive_repo/hive_repo_impl.dart';
+import 'package:bashkatep/core/helpers/firebase_helper/firestore_helper.dart';
+import 'package:bashkatep/core/models/user_model.dart';
+import 'package:bashkatep/core/repos/hive_repo/hive_repo.dart';
+import 'package:bashkatep/core/repos/hive_repo/hive_repo_impl.dart';
 
 class FirebaseAuthHelper {
   final FirebaseAuth _auth = FirebaseAuth.instance;

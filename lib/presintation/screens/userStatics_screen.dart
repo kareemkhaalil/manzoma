@@ -1,7 +1,7 @@
 // import 'package:flutter/material.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:hudor/core/bloc/attend_cubit/attendance_cubit.dart';
-// import 'package:hudor/core/models/user_model.dart';
+// import 'package:bashkatep/core/bloc/attend_cubit/attendance_cubit.dart';
+// import 'package:bashkatep/core/models/user_model.dart';
 
 // class UserStatisticsScreen extends StatelessWidget {
 //   const UserStatisticsScreen({super.key, Key? key});
@@ -66,7 +66,7 @@
 //                               );
 //                             },
 //                             style: ElevatedButton.styleFrom(
-//                               backgroundColor: const Color(0xff3ED9A0),
+//                               backgroundColor: const AppColors.colorGreen,
 //                               padding: const EdgeInsets.symmetric(
 //                                   vertical: 10.0, horizontal: 20.0),
 //                               shape: RoundedRectangleBorder(

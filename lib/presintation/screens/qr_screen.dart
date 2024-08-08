@@ -1,7 +1,8 @@
 // import 'dart:io';
 // import 'package:flutter/material.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:hudor/core/bloc/attend_cubit/qr_cubit.dart';
+// import 'package:bashkatep/core/bloc/attend_cubit/qr_cubit.dart';
+// import 'package:bashkatep/core/bloc/attend_cubit/qr_cubit.dart';
 // import 'package:qr_code_scanner/qr_code_scanner.dart';
 // import 'package:flutter/foundation.dart';
 

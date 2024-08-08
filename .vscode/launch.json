@@ -5,18 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "hudor",
+            "name": "bashkatep
+",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "hudor (profile mode)",
+            "name": "bashkatep
+ (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "hudor (release mode)",
+            "name": "bashkatep
+ (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"

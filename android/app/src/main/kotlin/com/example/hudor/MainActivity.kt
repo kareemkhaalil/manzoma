@@ -1,4 +1,5 @@
-package com.example.hudor
+package com.example.bashkatep
+
 
 import io.flutter.embedding.android.FlutterActivity
 

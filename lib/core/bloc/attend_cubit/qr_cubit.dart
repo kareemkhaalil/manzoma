@@ -3,14 +3,16 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geodesy/geodesy.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
-import 'package:hudor/core/helpers/firebase_helper/firestore_helper.dart';
-import 'package:hudor/core/models/attendance_model.dart';
-import 'package:hudor/core/models/branches_model.dart';
-import 'package:hudor/core/repos/hive_repo/hive_repo.dart';
-import 'package:hudor/core/repos/hive_repo/hive_repo_impl.dart';
-import 'package:hudor/presintation/screens/home_screen.dart';
+import 'package:bashkatep/core/helpers/firebase_helper/firestore_helper.dart';
+import 'package:bashkatep/core/models/attendance_model.dart';
+import 'package:bashkatep/core/models/branches_model.dart';
+import 'package:bashkatep/core/repos/hive_repo/hive_repo.dart';
+import 'package:bashkatep/core/repos/hive_repo/hive_repo_impl.dart';
+import 'package:bashkatep/presintation/screens/home_screen.dart';
+import 'package:bashkatep/core/models/client_model.dart';
 
 part 'qr_state.dart';
 
@@ -24,8 +26,9 @@ class QRScanCubit extends Cubit<QRScanState> {
   final FirestoreHelper firestoreHelper = FirestoreHelper();
   final HiveRepo hiveRepo = HiveRepoImpl(Hive.box('token'));
   final HiveRepo hiveUserNameRepo = HiveRepoImpl(Hive.box('userName'));
-  final HiveRepo hiveAttendanceRepo = HiveRepoImpl(
-      Hive.box('attendanceRecordId')); // تأكد من أن الصندوق مفتوح هنا
+  final HiveRepo hiveClientRepo = HiveRepoImpl(Hive.box('clientId'));
+  final HiveRepo hiveAttendanceRepo =
+      HiveRepoImpl(Hive.box('attendanceRecordId'));
   final HiveRepo hiveIsAttendRepo = HiveRepoImpl(Hive.box<bool>('isAttend'));
 
   Future<void> _requestLocationPermission() async {
@@ -40,42 +43,73 @@ class QRScanCubit extends Cubit<QRScanState> {
     }
   }
 
+  Future<String?> getClientName(String clientId) async {
+    try {
+      DocumentSnapshot clientDoc =
+          await _firestore.collection('clients').doc(clientId).get();
+      if (clientDoc.exists) {
+        ClientModel client = ClientModel.fromJson(
+            clientDoc.data() as Map<String, dynamic>, clientDoc.id);
+        return client
+            .clientName; // assuming client model has a `clientName` field
+      }
+    } catch (e) {
+      debugPrint('Error fetching client name: $e');
+    }
+    return null;
+  }
+
+  Future<ClientModel?> getClient(String clientId) async {
+    try {
+      DocumentSnapshot clientDoc =
+          await _firestore.collection('clients').doc(clientId).get();
+      if (clientDoc.exists) {
+        return ClientModel.fromJson(
+            clientDoc.data() as Map<String, dynamic>, clientDoc.id);
+      }
+    } catch (e) {
+      debugPrint('Error fetching client: $e');
+    }
+    return null;
+  }
+
   Future<num> _checkLocation(BranchModel branch) async {
-    // Get current location
     Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-
-    // Check if current location is within 5 meters of branch location
+      desiredAccuracy: LocationAccuracy.best,
+    );
     Geodesy geodesy = Geodesy();
-    LatLng branchLatLng =
-        LatLng(branch.location.latitude, branch.location.longitude);
-    LatLng currentLatLng = LatLng(position.latitude, position.longitude);
-
-    num distance =
-        geodesy.distanceBetweenTwoGeoPoints(branchLatLng, currentLatLng);
-
-    return distance;
+    LatLng branchLatLng = LatLng(
+      branch.location.latitude,
+      branch.location.longitude,
+    );
+    LatLng currentLatLng = LatLng(
+      position.latitude,
+      position.longitude,
+    );
+    return geodesy.distanceBetweenTwoGeoPoints(
+      branchLatLng,
+      currentLatLng,
+    );
   }
 
   void scanResult(
       String result, String id, String userName, BuildContext context) async {
     try {
       emit(QRScanLoading());
+      String? clientId = hiveClientRepo.get('clientId');
 
-      // Fetch all branches
-      QuerySnapshot snapshot = await _firestore.collection('branch').get();
-      debugPrint(
-          'Snapshot data: ${snapshot.docs.map((doc) => doc.data()).toList()}');
+      if (clientId == null) {
+        emit(const QRScanFailure('Client ID not found.'));
+        return;
+      }
 
-      List<BranchModel> branches = snapshot.docs.map((doc) {
-        return BranchModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
+      DocumentSnapshot clientSnapshot =
+          await firestoreHelper.getDocument('clients', clientId);
+      ClientModel client = ClientModel.fromJson(
+          clientSnapshot.data() as Map<String, dynamic>, clientSnapshot.id);
 
-      debugPrint('Fetched ${branches.length} branches');
-
-      // Check if the scanned QR code matches any branch QR code
       BranchModel? matchedBranch;
-      for (var branch in branches) {
+      for (var branch in client.branches) {
         if (branch.qrCode == result) {
           matchedBranch = branch;
           break;
@@ -83,25 +117,12 @@ class QRScanCubit extends Cubit<QRScanState> {
       }
 
       if (matchedBranch != null) {
-        debugPrint('Matched branch: ${matchedBranch.name}');
-
         num distance = await _checkLocation(matchedBranch);
-
         if (distance <= 5) {
-          // Add attendance record to Firestore and get the ID
           String recordId =
-              await addAttendanceRecord(matchedBranch, id, userName);
-
-          // Store the record ID in Hive
+              await addAttendanceRecord(matchedBranch, id, userName, clientId);
           await hiveAttendanceRepo.put('attendanceRecordId', recordId);
-
-          // تحديث قيمة isAttend إلى true
           await hiveIsAttendRepo.put('isAttend', true);
-
-          // Print the stored record ID
-          debugPrint(
-              'Stored Attendance Record ID: ${hiveAttendanceRepo.get('attendanceRecordId')}');
-
           emit(QRScanSuccess(matchedBranch, isCheckIn: true));
         } else {
           emit(const QRScanFailure('انت خارج نطاق الفرع'));
@@ -110,7 +131,6 @@ class QRScanCubit extends Cubit<QRScanState> {
         emit(const QRScanFailure('خطأ في كود الفرع'));
       }
     } catch (e) {
-      debugPrint('Error while scanning: $e');
       emit(QRScanFailure('Error while scanning: $e'));
     }
   }
@@ -119,46 +139,36 @@ class QRScanCubit extends Cubit<QRScanState> {
       BuildContext context) async {
     try {
       emit(QRScanLoading());
-      debugPrint('Entered branch code: $branchCode');
+      String? clientId = hiveClientRepo.get('clientId');
 
-      // Fetch all branches
-      QuerySnapshot snapshot = await _firestore.collection('branch').get();
-      debugPrint('Snapshot docs count: ${snapshot.docs.length}');
+      if (clientId == null) {
+        emit(const QRScanFailure('Client ID not found.'));
+        return;
+      }
 
-      List<BranchModel> branches = snapshot.docs.map((doc) {
-        return BranchModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
-
-      debugPrint('Fetched ${branches.length} branches');
+      DocumentSnapshot clientSnapshot =
+          await firestoreHelper.getDocument('clients', clientId);
+      ClientModel client = ClientModel.fromJson(
+          clientSnapshot.data() as Map<String, dynamic>, clientSnapshot.id);
 
       BranchModel? matchedBranch;
-
-      for (var branch in branches) {
-        debugPrint('Comparing with branch code: ${branch.qrCode}');
+      for (var branch in client.branches) {
         if (branch.qrCode == branchCode) {
           matchedBranch = branch;
           break;
         }
       }
-      debugPrint('Matched branch: ${matchedBranch?.qrCode}');
 
       if (matchedBranch != null) {
         num distance = await _checkLocation(matchedBranch);
-
         if (distance <= 5) {
-          // Add attendance record to Firestore and get the ID
           String recordId =
-              await addAttendanceRecord(matchedBranch, id, userName);
-
-          // Store the record ID in Hive
+              await addAttendanceRecord(matchedBranch, id, userName, clientId);
           await hiveAttendanceRepo.put('attendanceRecordId', recordId);
-
-          // تحديث قيمة isAttend إلى true
           await hiveIsAttendRepo.put('isAttend', true);
 
-          // Print the stored record ID
-          debugPrint(
-              'Stored Attendance Record ID: ${hiveAttendanceRepo.get('attendanceRecordId')}');
+          await firestoreHelper.updateAttendanceRecordWithSessionId(
+              clientId, recordId, id);
 
           emit(QRScanSuccess(matchedBranch, isCheckIn: true));
           controller.clear();
@@ -180,35 +190,37 @@ class QRScanCubit extends Cubit<QRScanState> {
         emit(const QRScanFailure('خطأ في كود الفرع'));
       }
     } catch (e) {
-      debugPrint('Error while checking branch code: $e');
       emit(QRScanFailure('Error while checking branch code: $e'));
     }
   }
 
   Future<String> addAttendanceRecord(
-      BranchModel branch, String id, String userName) async {
+      BranchModel branch, String id, String userName, String clientId) async {
     try {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
-
       AttendanceRecordModel attendanceRecord = AttendanceRecordModel(
-        branchId: branch.id,
+        branchId: branch.branchId,
         branchName: branch.name,
         checkInTime: Timestamp.now(),
-        employeeId: id, // Replace with actual employee id
-        employeeName: userName, // Replace with actual employee name
+        employeeId: id,
+        employeeName: userName,
         location: GeoPoint(position.latitude, position.longitude),
-        mobileIp: "", // Assign appropriate value for mobile IP
+        mobileIp: "",
       );
 
-      DocumentReference docRef = await _firestore
-          .collection('attendance')
-          .add(attendanceRecord.toJson());
+      // إضافة السجل الجديد إلى قاعدة البيانات
+      DocumentReference docRef =
+          await firestoreHelper.addAttendanceRecord(clientId, attendanceRecord);
 
-      debugPrint('Added attendance record with ID: ${docRef.id}');
+      // تحديث السجل ليشمل id الجديد
+      await docRef.update({'id': docRef.id});
+
+      // تخزين معرف الجلسة في Hive أو أي تخزين محلي آخر
+      await hiveAttendanceRepo.put('attendanceRecordId', docRef.id);
+
       return docRef.id;
     } catch (e) {
-      debugPrint('Error while adding attendance record: $e');
       throw Exception('Error while adding attendance record: $e');
     }
   }
@@ -216,147 +228,96 @@ class QRScanCubit extends Cubit<QRScanState> {
   void scanResultCheckOut(String result, BuildContext context) async {
     try {
       emit(QRScanLoading());
+      String? clientId = hiveClientRepo.get('clientId');
 
-      // Fetch all branches
-      QuerySnapshot snapshot = await _firestore.collection('branch').get();
-      debugPrint(
-          'Snapshot data: ${snapshot.docs.map((doc) => doc.data()).toList()}');
+      if (clientId == null) {
+        emit(const QRScanFailure('Client ID not found.'));
+        return;
+      }
 
-      List<BranchModel> branches = snapshot.docs.map((doc) {
-        return BranchModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
+      DocumentSnapshot clientSnapshot =
+          await firestoreHelper.getDocument('clients', clientId);
+      ClientModel client = ClientModel.fromJson(
+          clientSnapshot.data() as Map<String, dynamic>, clientSnapshot.id);
 
-      debugPrint('Fetched ${branches.length} branches');
-
-      // Check if the scanned QR code matches any branch QR code
       BranchModel? matchedBranch;
-      for (var branch in branches) {
+      for (var branch in client.branches) {
         if (branch.qrCode == result) {
           matchedBranch = branch;
           break;
         }
       }
 
-      debugPrint('Matched branch: ${matchedBranch?.qrCode}');
-
       if (matchedBranch != null) {
         num distance = await _checkLocation(matchedBranch);
-
         if (distance <= 5) {
-          // Retrieve last attendance record ID from Hive
           String? lastRecordId = hiveAttendanceRepo.get('attendanceRecordId');
 
           if (lastRecordId != null) {
-            // Update check-out time for last attendance record
             await firestoreHelper.updateDocument(
-              'attendance',
-              lastRecordId,
-              {'checkOutTime': Timestamp.now()},
-            );
-
-            // Delete last attendance record ID from Hive
+                'attendance', lastRecordId, {'checkOutTime': Timestamp.now()});
             await hiveAttendanceRepo.delete('attendanceRecordId');
-
-            // تحديث قيمة isAttend إلى false
             await hiveIsAttendRepo.put('isAttend', false);
-
             emit(QRScanSuccess(matchedBranch, isCheckIn: false));
-
-            controller.clear();
-            if (context.mounted) Navigator.pop(context);
           } else {
-            emit(const QRScanFailure('لا يوجد سجل حضور نشط.'));
+            emit(const QRScanFailure('لم يتم العثور على سجل الحضور'));
           }
         } else {
-          emit(const QRScanFailure('أنت خارج نطاق الفرع'));
+          emit(const QRScanFailure('انت خارج نطاق الفرع'));
         }
       } else {
-        emit(const QRScanFailure('خطأ في رمز الفرع'));
+        emit(const QRScanFailure('خطأ في كود الفرع'));
       }
     } catch (e) {
-      debugPrint('خطأ أثناء التحقق من رمز الفرع: $e');
-      emit(QRScanFailure('خطأ أثناء التحقق من رمز الفرع: $e'));
+      emit(QRScanFailure('Error while scanning for checkout: $e'));
     }
   }
 
-  void checkOut(String branchCode, String id, String userName,
-      BuildContext context) async {
+  void checkBranchCodeCheckOut(String branchCode, BuildContext context) async {
     try {
       emit(QRScanLoading());
-      debugPrint('الرمز المدخل: $branchCode');
+      String? clientId = hiveClientRepo.get('clientId');
 
-      // جلب كافة الفروع
-      QuerySnapshot snapshot = await _firestore.collection('branch').get();
-      debugPrint('عدد مستندات اللقطة: ${snapshot.docs.length}');
+      if (clientId == null) {
+        emit(const QRScanFailure('Client ID not found.'));
+        return;
+      }
 
-      List<BranchModel> branches = snapshot.docs.map((doc) {
-        return BranchModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
-
-      debugPrint('تم جلب ${branches.length} فرع');
+      DocumentSnapshot clientSnapshot =
+          await firestoreHelper.getDocument('clients', clientId);
+      ClientModel client = ClientModel.fromJson(
+          clientSnapshot.data() as Map<String, dynamic>, clientSnapshot.id);
 
       BranchModel? matchedBranch;
-
-      for (var branch in branches) {
-        debugPrint('المقارنة مع رمز الفرع: ${branch.qrCode}');
+      for (var branch in client.branches) {
         if (branch.qrCode == branchCode) {
           matchedBranch = branch;
           break;
         }
       }
-      debugPrint('الفرع المتطابق: ${matchedBranch?.qrCode}');
 
       if (matchedBranch != null) {
         num distance = await _checkLocation(matchedBranch);
-
         if (distance <= 5) {
-          // استرجاع هوية سجل الحضور الأخير من Hive
           String? lastRecordId = hiveAttendanceRepo.get('attendanceRecordId');
 
           if (lastRecordId != null) {
-            // تحديث وقت الانصراف لسجل الحضور الأخير
-            await firestoreHelper.updateDocument(
-              'attendance',
-              lastRecordId,
-              {'checkOutTime': Timestamp.now()},
-            );
-
-            // حذف هوية سجل الحضور الأخير من Hive
+            await firestoreHelper.updateAttendanceRecordWithCheckOut(
+                clientId, lastRecordId, Timestamp.now());
             await hiveAttendanceRepo.delete('attendanceRecordId');
-
-            // تحديث قيمة isAttend إلى false
             await hiveIsAttendRepo.put('isAttend', false);
-
             emit(QRScanSuccess(matchedBranch, isCheckIn: false));
-
-            controller.clear();
-            if (context.mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BlocProvider(
-                    create: (context) => QRScanCubit(),
-                    child: const HomeScreen(),
-                  ),
-                ),
-              );
-            }
           } else {
-            emit(const QRScanFailure('لا يوجد سجل حضور نشط.'));
+            emit(const QRScanFailure('لم يتم العثور على سجل الحضور'));
           }
         } else {
-          emit(const QRScanFailure('أنت خارج نطاق الفرع'));
+          emit(const QRScanFailure('انت خارج نطاق الفرع'));
         }
       } else {
-        emit(const QRScanFailure('خطأ في رمز الفرع'));
+        emit(const QRScanFailure('خطأ في كود الفرع'));
       }
     } catch (e) {
-      debugPrint('خطأ أثناء التحقق من رمز الفرع: $e');
-      emit(QRScanFailure('خطأ أثناء التحقق من رمز الفرع: $e'));
+      emit(QRScanFailure('Error while checking branch code for checkout: $e'));
     }
-  }
-
-  void resetScan() {
-    emit(QRScanInitial());
   }
 }

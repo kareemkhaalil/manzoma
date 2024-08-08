@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hudor/core/bloc/attend_cubit/attendance_cubit.dart';
+import 'package:bashkatep/core/bloc/attend_cubit/attendance_cubit.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AttendanceDataTableScreen extends StatefulWidget {
   final String branchId;
+  final String clientId;
 
-  const AttendanceDataTableScreen({super.key, required this.branchId});
+  const AttendanceDataTableScreen(
+      {super.key, required this.branchId, required this.clientId});
 
   @override
   _AttendanceDataTableScreenState createState() =>
-      _AttendanceDataTableScreenState();
+      _AttendanceDataTableScreenState(clientId: clientId);
 }
 
 class _AttendanceDataTableScreenState extends State<AttendanceDataTableScreen> {
@@ -20,13 +22,15 @@ class _AttendanceDataTableScreenState extends State<AttendanceDataTableScreen> {
   DateTime today =
       DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
   late DateTime _selectedDate = today; // التاريخ الافتراضي
+  final String clientId;
+  _AttendanceDataTableScreenState({required this.clientId});
 
   @override
   void initState() {
     super.initState();
     _attendanceCubit = AttendanceCubit();
     _attendanceCubit.fetchFilteredAttendanceData(
-        _selectedDate, widget.branchId);
+        _selectedDate, widget.branchId, clientId);
   }
 
   @override
@@ -57,8 +61,6 @@ class _AttendanceDataTableScreenState extends State<AttendanceDataTableScreen> {
                 return const Center(child: Text('لا توجد بيانات.'));
               }
               return AttendanceDataTable(attendanceData: state.attendanceData);
-            } else if (state is AttendanceFailure) {
-              return Center(child: Text('خطأ: ${state.error}'));
             } else if (state is AttendanceFilteredSuccess) {
               if (state.filteredAttendanceData.isEmpty) {
                 return const Center(
@@ -73,6 +75,8 @@ class _AttendanceDataTableScreenState extends State<AttendanceDataTableScreen> {
                   ),
                 ],
               );
+            } else if (state is AttendanceFailure) {
+              return Center(child: Text('خطأ: ${state.error}'));
             } else {
               return const Center(child: Text('لا توجد بيانات.'));
             }
@@ -109,7 +113,10 @@ class _AttendanceDataTableScreenState extends State<AttendanceDataTableScreen> {
       setState(() {
         _selectedDate = picked;
         _attendanceCubit.fetchFilteredAttendanceData(
-            _selectedDate, widget.branchId);
+          _selectedDate,
+          widget.branchId,
+          clientId,
+        );
       });
     }
   }
