@@ -73,7 +73,7 @@ class ClientsViewScreen extends StatelessWidget {
                         child: ListTile(
                           title: Text(client.clientName),
                           subtitle: Text(
-                            'Total Costs: ${client.adminCost + client.userCost + client.branchCost}',
+                            'Total Costs: ${(client.adminCost * client.admins.length) + (client.userCost * client.users.length) + (client.branchCost * client.branches.length)}',
                           ),
                           trailing: Icon(Icons.arrow_forward),
                         ),

@@ -65,7 +65,6 @@ class ClientModel {
       isSuspended: json['isSuspended'] ?? false,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'clientName': clientName,

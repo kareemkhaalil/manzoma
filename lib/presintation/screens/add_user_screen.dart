@@ -1,3 +1,4 @@
+import 'package:bashkatep/core/models/client_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bashkatep/core/bloc/admin/add_user_cubit/add_user_cubit.dart';
@@ -8,7 +9,8 @@ import 'package:bashkatep/utilies/constans.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class AddUserScreen extends StatelessWidget {
-  const AddUserScreen({super.key});
+  final ClientModel? clientData;
+  const AddUserScreen({super.key, required this.clientData});
 
   @override
   Widget build(BuildContext context) {
@@ -61,8 +63,8 @@ class AddUserScreen extends StatelessWidget {
                   key: cubit.formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         "إضافة مستخدم جديد",
@@ -81,7 +83,15 @@ class AddUserScreen extends StatelessWidget {
                         keyboardType: TextInputType.text,
                         obscureText: false,
                         validator: Validator().validateName,
-                        controller: cubit.nameController,
+                        controller: cubit.userNameController,
+                      ),
+                      SizedBox(height: height * 0.01),
+                      Text(
+                        'يتم استخدامه في تسجيل الدخول',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
                       ),
                       SizedBox(height: height * 0.02),
                       CustomTextField(
@@ -114,30 +124,46 @@ class AddUserScreen extends StatelessWidget {
                         keyboardType: TextInputType.text,
                         obscureText: false,
                         validator: Validator().validateName,
-                        controller: cubit.userNameController,
+                        controller: cubit.nameController,
+                      ),
+                      SizedBox(height: height * 0.01),
+                      Text(
+                        'اسم المستخدم للعرض فقط ',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
                       ),
                       SizedBox(height: height * 0.02),
                       SizedBox(
                         width: width * 0.9,
                         child: DropdownButtonFormField<String>(
-                          decoration: InputDecoration(
-                            labelText: 'اختر الدور',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            decoration: InputDecoration(
+                              labelText: 'اختر الدور',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                          ),
-                          items: ['admin', 'user'].map((role) {
-                            return DropdownMenuItem(
-                              value: role,
-                              child: Text(role),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            cubit.selectedRole = value;
-                          },
-                          validator: (value) =>
-                              value == null ? 'اختر الدور' : null,
-                        ),
+                            items: ['admin', 'user'].map((role) {
+                              return DropdownMenuItem(
+                                value: role,
+                                child: Text(role),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              cubit.selectedRole = value;
+                            },
+                            validator: (value) {
+                              if (clientData!.admins.length <=
+                                  clientData!.maxAdmins) {
+                                if (value == null) {
+                                  'اختر الدور';
+                                } else
+                                  null;
+                              } else {
+                                'لقد تجاوزت العدد المسموح من المسؤولين ';
+                              }
+                            }),
                       ),
                       SizedBox(height: height * 0.06),
                       ElevatedButton(

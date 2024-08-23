@@ -5,8 +5,8 @@ class AttendanceRecordModel {
   final String branchId;
   final String branchName;
   final Timestamp checkInTime;
-  final Timestamp? checkOutTime; // تغيير لجعل checkOutTime غير مطلوب
-
+  final Timestamp? checkOutTime;
+  final String? sessionId;
   final String employeeId;
   final String employeeName;
   final GeoPoint location;
@@ -17,12 +17,14 @@ class AttendanceRecordModel {
     required this.branchId,
     required this.branchName,
     required this.checkInTime,
-    this.checkOutTime, // تغيير لجعل checkOutTime غير مطلوب
+    this.checkOutTime,
     required this.employeeId,
     required this.employeeName,
     required this.location,
     required this.mobileIp,
+    this.sessionId,
   });
+
   factory AttendanceRecordModel.fromJson(Map<String, dynamic> json) {
     return AttendanceRecordModel(
       id: json['id'],
@@ -34,6 +36,7 @@ class AttendanceRecordModel {
       employeeName: json['employeeName'],
       location: json['location'] as GeoPoint,
       mobileIp: json['mobileIp'],
+      sessionId: json['sessionId'],
     );
   }
 
@@ -48,20 +51,25 @@ class AttendanceRecordModel {
       'employeeName': employeeName,
       'location': location,
       'mobileIp': mobileIp,
+      'sessionId': sessionId,
     };
   }
 
-  AttendanceRecordModel copyWith({String? id}) {
+  AttendanceRecordModel copyWith({
+    String? id,
+    Timestamp? checkOutTime,
+  }) {
     return AttendanceRecordModel(
       id: id ?? this.id,
       branchId: branchId,
       branchName: branchName,
       checkInTime: checkInTime,
-      checkOutTime: checkOutTime, // تغيير لجعل checkOutTime غير مطلوب
+      checkOutTime: checkOutTime ?? this.checkOutTime,
       employeeId: employeeId,
       employeeName: employeeName,
       location: location,
       mobileIp: mobileIp,
+      sessionId: sessionId,
     );
   }
 }

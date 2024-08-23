@@ -17,7 +17,8 @@ class AttendanceCubit extends Cubit<AttendanceState> {
   AttendanceCubit() : super(AttendanceInitial());
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  Future<void> fetchClientData(String clientId) async {
+
+  Future<ClientModel?> fetchClientData(String clientId) async {
     try {
       emit(AttendanceLoading());
 
@@ -32,9 +33,11 @@ class AttendanceCubit extends Cubit<AttendanceState> {
       ClientModel clientModel = ClientModel.fromJson(clientData, clientId);
 
       emit(AttendanceClientDataLoaded(clientModel));
+      return clientModel;
     } catch (e) {
       emit(AttendanceFailure(e.toString()));
       debugPrint('Error fetching client data: $e');
+      return null;
     }
   }
 
@@ -132,10 +135,8 @@ class AttendanceCubit extends Cubit<AttendanceState> {
   Future<void> fetchUserReportsForToday(String clientId) async {
     try {
       emit(AttendanceLoading());
-
       DateTime now = DateTime.now();
-      DateTime startOfDay = DateTime(now.year, now.month, now.day);
-      DateTime endOfDay = startOfDay.add(Duration(days: 1));
+      DateTime eightHoursAgo = now.subtract(Duration(hours: 8));
 
       QuerySnapshot userSnapshot = await _firestore
           .collection('clients')
@@ -149,19 +150,25 @@ class AttendanceCubit extends Cubit<AttendanceState> {
         String userId = userDoc.id;
         var userData = userDoc.data() as Map<String, dynamic>;
 
+        print('Processing user: $userData');
+
         QuerySnapshot attendanceSnapshot = await _firestore
+            .collection('clients')
+            .doc(clientId)
             .collection('attendanceRecords')
             .where('employeeId', isEqualTo: userId)
             .where('checkInTime',
-                isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-            .where('checkInTime',
-                isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
+                isGreaterThanOrEqualTo: Timestamp.fromDate(eightHoursAgo))
+            .where('checkInTime', isLessThanOrEqualTo: Timestamp.fromDate(now))
             .get();
 
         AttendanceRecordModel? attendanceRecord;
         if (attendanceSnapshot.docs.isNotEmpty) {
+          print('Attendance records found: ${attendanceSnapshot.docs.length}');
           attendanceRecord = AttendanceRecordModel.fromJson(
               attendanceSnapshot.docs.first.data() as Map<String, dynamic>);
+        } else {
+          print('No attendance records found for user: $userId');
         }
 
         userReports.add(UserReportModel(
@@ -202,6 +209,8 @@ class AttendanceCubit extends Cubit<AttendanceState> {
 
       // Fetch attendance records
       QuerySnapshot attendanceSnapshot = await _firestore
+          .collection('clients')
+          .doc(clientId)
           .collection('attendanceRecords')
           .where('employeeId', isEqualTo: userId)
           .get();
@@ -270,9 +279,10 @@ class AttendanceCubit extends Cubit<AttendanceState> {
       emit(AttendanceLoading());
 
       String outputFileName = 'Attendance.xlsx';
-      List<Map<String, dynamic>> attendanceData = await fetchAttendanceData();
+      List<Map<String, dynamic>> attendanceData =
+          await fetchAttendanceData(clientId);
 
-      String filePath = await generateAttendanceExcel(outputFileName);
+      String filePath = await generateAttendanceExcel(outputFileName, clientId);
       debugPrint(filePath);
 
       emit(AttendanceExportSuccess(filePath));
@@ -286,9 +296,13 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchAttendanceData() async {
-    QuerySnapshot querySnapshot =
-        await _firestore.collection('attendance').get();
+  Future<List<Map<String, dynamic>>> fetchAttendanceData(
+      String clientId) async {
+    QuerySnapshot querySnapshot = await _firestore
+        .collection('clients')
+        .doc(clientId)
+        .collection('attendanceRecords')
+        .get();
 
     List<Map<String, dynamic>> attendanceData = querySnapshot.docs
         .map((doc) => doc.data() as Map<String, dynamic>)
@@ -297,7 +311,8 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     return attendanceData;
   }
 
-  Future<String> generateAttendanceExcel(String outputFileName) async {
+  Future<String> generateAttendanceExcel(
+      String outputFileName, clientId) async {
     var excel = Excel.createExcel();
     Sheet sheetObject = excel['الحضور'];
 
@@ -310,11 +325,11 @@ class AttendanceCubit extends Cubit<AttendanceState> {
       const TextCellValue('كود المستخدم'),
       const TextCellValue('اسم المستخدم'),
       const TextCellValue('العنوان'),
-      const TextCellValue('Mobile IP'),
       const TextCellValue('عدد الساعات') // New column for hours worked
     ]);
 
-    List<Map<String, dynamic>> attendanceData = await fetchAttendanceData();
+    List<Map<String, dynamic>> attendanceData =
+        await fetchAttendanceData(clientId);
 
     for (var data in attendanceData) {
       String locationString = data['location'] != null
@@ -340,7 +355,6 @@ class AttendanceCubit extends Cubit<AttendanceState> {
         TextCellValue(data['employeeId']?.toString() ?? 'غير متوفر'),
         TextCellValue(data['employeeName'] ?? 'غير متوفر'),
         TextCellValue(locationString),
-        TextCellValue(data['mobileIp'] ?? 'غير متوفر'),
         TextCellValue(hoursWorked) // New column data
       ]);
     }
@@ -362,11 +376,13 @@ class AttendanceCubit extends Cubit<AttendanceState> {
   }
 
   Future<List<Map<String, dynamic>>> fetchBranchAttendanceData(
-      String branchId) async {
+      String branchId, clientId) async {
     try {
       emit(AttendanceLoading());
       QuerySnapshot querySnapshot = await _firestore
-          .collection('attendance')
+          .collection('clients')
+          .doc(clientId)
+          .collection('attendanceRecords')
           .where('branchId', isEqualTo: branchId)
           .get();
 
@@ -384,13 +400,15 @@ class AttendanceCubit extends Cubit<AttendanceState> {
   }
 
   Future<void> fetchFilteredBranchAttendanceData(
-      String branchId, DateTime startDate, DateTime endDate) async {
+      String branchId, clientId, DateTime startDate, DateTime endDate) async {
     try {
       emit(AttendanceLoading());
       debugPrint(
           'Filtering attendance data for branchId: $branchId from $startDate to $endDate');
       QuerySnapshot querySnapshot = await _firestore
-          .collection('attendance')
+          .collection('clients')
+          .doc(clientId)
+          .collection('attendanceRecords')
           .where('branchId', isEqualTo: branchId)
           .where('checkInTime',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))

@@ -1,10 +1,14 @@
+import 'package:bashkatep/core/bloc/attend_cubit/attendance_cubit.dart';
 import 'package:bashkatep/core/models/user_model.dart';
+import 'package:bashkatep/presintation/screens/user_report_screen.dart';
 import 'package:bloc/bloc.dart';
 import 'package:bashkatep/core/models/client_model.dart';
 import 'package:bashkatep/core/helpers/firebase_helper/firestore_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 import 'package:bashkatep/core/models/branches_model.dart';
 
@@ -200,8 +204,16 @@ class SuperAdminCubit extends Cubit<SuperAdminState> {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.of(context).pop();
                 await deleteUser(clientId, userId);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider(
+                      create: (context) => AttendanceCubit(),
+                      child: UserReportsScreen(clientId: clientId),
+                    ),
+                  ),
+                );
               },
               child: Text('حذف'),
             ),
@@ -212,14 +224,54 @@ class SuperAdminCubit extends Cubit<SuperAdminState> {
   }
 
   Future<void> deleteUser(String clientId, String userId) async {
-    // هنا تضيف الكود الخاص بحذف المستخدم من قاعدة البيانات
-    // مثال: Firebase Firestore
-    await FirebaseFirestore.instance
-        .collection('clients')
-        .doc(clientId)
-        .collection('users')
-        .doc(userId)
-        .delete();
+    try {
+      // حذف المستخدم من مجموعة `users`
+      await FirebaseFirestore.instance
+          .collection('clients')
+          .doc(clientId)
+          .collection('users')
+          .doc(userId)
+          .delete();
+
+      // جلب وثيقة العميل لإيجاد المستخدم وإزالته من المصفوفة
+      DocumentSnapshot clientDoc = await FirebaseFirestore.instance
+          .collection('clients')
+          .doc(clientId)
+          .get();
+
+      if (clientDoc.exists) {
+        Map<String, dynamic> clientData =
+            clientDoc.data() as Map<String, dynamic>;
+        List<dynamic> users = clientData['users'] ?? [];
+
+        // إيجاد المستخدم في المصفوفة
+        var userToRemove = users.firstWhere(
+            (user) => user['employee_id'] == userId,
+            orElse: () => null);
+        debugPrint('User to remove: $userToRemove');
+
+        if (userToRemove != null) {
+          // إزالة المستخدم من المصفوفة
+          await FirebaseFirestore.instance
+              .collection('clients')
+              .doc(clientId)
+              .update({
+            'users': FieldValue.arrayRemove([userToRemove])
+          });
+          debugPrint('User is removed');
+        } else {
+          debugPrint('User not found in array.');
+        }
+      } else {
+        debugPrint('Client document does not exist.');
+      }
+
+      // حذف المستخدم من Firebase Authentication
+      await FirebaseAuth.instance.currentUser?.delete();
+      debugPrint('User deleted from Firebase Authentication');
+    } on FirebaseException catch (e) {
+      debugPrint('Error deleting user: $e');
+    }
   }
 
   Future<void> deleteBranch(String clientId, String branchId) async {

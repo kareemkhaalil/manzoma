@@ -80,11 +80,18 @@ class FirestoreHelper {
             List<dynamic> attendanceRecords =
                 clientData['attendanceRecords'] ?? [];
 
-            attendanceRecords.add(attendanceRecord.toJson());
+            // إنشاء معرف جلسة جديد
+            final sessionId = attendanceDoc.id;
+
+            // إضافة معرف الجلسة إلى سجل الحضور
+            final attendanceDataWithSession = attendanceRecord.toJson();
+            attendanceDataWithSession['sessionId'] = sessionId;
+
+            attendanceRecords.add(attendanceDataWithSession);
             transaction
                 .update(clientDoc, {'attendanceRecords': attendanceRecords});
-            transaction.set(attendanceDoc, attendanceRecord.toJson());
-            debugPrint('Added attendance record: ${attendanceRecord.id}');
+            transaction.set(attendanceDoc, attendanceDataWithSession);
+            debugPrint('Added attendance record: $sessionId');
           } else {
             debugPrint('Client document does not exist.');
             throw Exception('Client document does not exist.');
@@ -118,11 +125,11 @@ class FirestoreHelper {
           // تحديث السجل ليشمل sessionId
           final updatedData = {
             ...attendanceData,
-            'sessionId': sessionId,
+            'id': docId,
           };
 
           transaction.update(attendanceDoc, updatedData);
-          debugPrint('Updated attendance record with sessionId: $sessionId');
+          debugPrint('Updated attendance record with sessionId: $docId');
         } else {
           debugPrint('Attendance record does not exist.');
           throw Exception('Attendance record does not exist.');
@@ -266,47 +273,88 @@ class FirestoreHelper {
   }
 
   Future<void> updateAttendanceRecordWithCheckOut(
-      String clientId, String docId, Timestamp checkOutTime) async {
+    String clientId,
+    String sessionId,
+    Timestamp checkOutTime,
+  ) async {
     try {
       final clientDoc = firestore.collection('clients').doc(clientId);
       final attendanceDoc =
-          clientDoc.collection('attendanceRecords').doc(docId);
+          clientDoc.collection('attendanceRecords').doc(sessionId);
 
       await firestore.runTransaction((transaction) async {
+        // قراءة المستندات أولاً
         final attendanceSnapshot = await transaction.get(attendanceDoc);
-
-        if (attendanceSnapshot.exists) {
-          final attendanceData =
-              attendanceSnapshot.data() as Map<String, dynamic>;
-
-          // تحديث السجل ليشمل checkOutTime
-          final updatedData = {
-            ...attendanceData,
-            'checkOutTime': checkOutTime,
-          };
-
-          transaction.update(attendanceDoc, updatedData);
-
-          // تحديث الـ map الخاص بالحضور داخل كولكشن العميل
-          final clientData = await transaction.get(clientDoc);
-          if (clientData.exists) {
-            final clientAttendanceRecords =
-                clientData.data()?['attendanceRecords'] as List<dynamic>? ?? [];
-            final index = clientAttendanceRecords
-                .indexWhere((record) => record['id'] == docId);
-
-            if (index != -1) {
-              clientAttendanceRecords[index] = updatedData;
-              transaction.update(
-                  clientDoc, {'attendanceRecords': clientAttendanceRecords});
-            }
-          }
-        } else {
-          throw Exception('Attendance record does not exist.');
+        if (!attendanceSnapshot.exists) {
+          debugPrint(
+              'Attendance record not found in collection for sessionId: $sessionId.');
+          throw Exception(
+              'Attendance record does not exist in the attendanceRecords collection.');
         }
+
+        final attendanceData = AttendanceRecordModel.fromJson(
+            attendanceSnapshot.data() as Map<String, dynamic>);
+        final updatedAttendance =
+            attendanceData.copyWith(checkOutTime: checkOutTime);
+
+        // قراءة مستند العميل
+        final clientSnapshot = await transaction.get(clientDoc);
+        if (!clientSnapshot.exists) {
+          debugPrint('Client document does not exist.');
+          throw Exception('Client document does not exist.');
+        }
+
+        final clientData = clientSnapshot.data() as Map<String, dynamic>;
+        List<dynamic> clientAttendanceRecordsJson =
+            clientData['attendanceRecords'] as List<dynamic>? ?? [];
+
+        // تحديث السجل في قائمة الحضور
+        bool sessionFound = false;
+        for (int i = 0; i < clientAttendanceRecordsJson.length; i++) {
+          final recordJson =
+              clientAttendanceRecordsJson[i] as Map<String, dynamic>;
+          final record = AttendanceRecordModel.fromJson(recordJson);
+
+          if (record.sessionId == sessionId) {
+            final updatedAttendance =
+                record.copyWith(checkOutTime: checkOutTime);
+            clientAttendanceRecordsJson[i] = updatedAttendance.toJson();
+            sessionFound = true;
+            debugPrint('Session array found and updated.');
+            break;
+          }
+        }
+
+        if (sessionFound) {
+          // تحديث مستند العميل
+          debugPrint(
+              'Updating attendance record in client document with sessionId: $sessionId');
+          transaction.update(clientDoc, {
+            'attendanceRecords': clientAttendanceRecordsJson,
+          });
+          debugPrint(
+              'Successfully updated attendance record in client document.');
+        } else {
+          debugPrint(
+              'Session ID not found in client document\'s attendance records list.');
+          throw Exception(
+              'Session ID not found in client document\'s attendance records list.');
+        }
+
+        // تحديث السجل في مجموعة attendanceRecords بعد الانتهاء من جميع عمليات القراءة
+        debugPrint(
+            'Updating attendance record in attendanceRecords collection with sessionId: $sessionId');
+        transaction.update(attendanceDoc, updatedAttendance.toJson());
+        debugPrint('Successfully updated attendance record in collection.');
       });
     } on FirebaseException catch (e) {
-      throw Exception('Error updating attendance record with checkOutTime: $e');
+      debugPrint('FirebaseException: ${e.message}');
+      debugPrint('Stack Trace: ${e.stackTrace}');
+      throw Exception('FirebaseException: ${e.message}');
+    } catch (e, stackTrace) {
+      debugPrint('General Error: $e');
+      debugPrint('Stack Trace: $stackTrace');
+      throw Exception('General Error: $e');
     }
   }
 

@@ -12,12 +12,12 @@ class AttendanceInitial extends AttendanceState {}
 class AttendanceLoading extends AttendanceState {}
 
 class AttendanceClientDataLoaded extends AttendanceState {
-  final ClientModel clientData;
+  final ClientModel? clientData;
 
   AttendanceClientDataLoaded(this.clientData);
 
   @override
-  List<Object> get props => [clientData];
+  List<Object> get props => [clientData!];
 }
 
 class AttendanceSuccess extends AttendanceState {

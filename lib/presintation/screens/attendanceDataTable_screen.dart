@@ -43,8 +43,8 @@ class _AttendanceDataTableScreenState extends State<AttendanceDataTableScreen> {
             icon: const Icon(Icons.filter_list),
             onPressed: () {
               Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) =>
-                    AttendanceDataTableFilterScreen(branchId: widget.branchId),
+                builder: (context) => AttendanceDataTableFilterScreen(
+                    branchId: widget.branchId, clientId: clientId),
               ));
             },
           ),
@@ -63,8 +63,14 @@ class _AttendanceDataTableScreenState extends State<AttendanceDataTableScreen> {
               return AttendanceDataTable(attendanceData: state.attendanceData);
             } else if (state is AttendanceFilteredSuccess) {
               if (state.filteredAttendanceData.isEmpty) {
-                return const Center(
-                    child: Text('لا توجد بيانات للتاريخ المحدد.'));
+                return Center(
+                    child: Column(
+                  children: [
+                    _buildDateSelector(),
+                    const SizedBox(height: 20),
+                    const Text('لا توجد بيانات للتاريخ المحدد.'),
+                  ],
+                ));
               }
               return Column(
                 children: [
@@ -92,10 +98,27 @@ class _AttendanceDataTableScreenState extends State<AttendanceDataTableScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => _selectDate(context),
-            child: const Text('اختر تاريخ'),
+            child: const Text(
+              'اختر تاريخ',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue, // لون الخلفية
+              iconColor: Colors.white, // لون النص
+              shadowColor: Colors.blueAccent, // لون الظل
+              elevation: 5, // ارتفاع الظل
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20), // زوايا مستديرة
+              ),
+              padding: EdgeInsets.symmetric(
+                  horizontal: 30, vertical: 15), // حواف الزرار
+            ),
           ),
+          const SizedBox(width: 20),
           Text('التاريخ المحدد: ${_selectedDate.toString().split(' ')[0]}'),
         ],
       ),
@@ -130,8 +153,10 @@ class _AttendanceDataTableScreenState extends State<AttendanceDataTableScreen> {
 
 class AttendanceDataTableFilterScreen extends StatefulWidget {
   final String branchId;
+  final String clientId;
 
-  const AttendanceDataTableFilterScreen({super.key, required this.branchId});
+  const AttendanceDataTableFilterScreen(
+      {super.key, required this.branchId, required this.clientId});
 
   @override
   _AttendanceDataTableFilterScreenState createState() =>
@@ -153,8 +178,11 @@ class _AttendanceDataTableFilterScreenState
         title: const Text('تصفية بيانات الحضور'),
       ),
       body: BlocProvider(
-        create: (context) =>
-            AttendanceCubit()..fetchBranchAttendanceData(widget.branchId),
+        create: (context) => AttendanceCubit()
+          ..fetchBranchAttendanceData(
+            widget.branchId,
+            widget.clientId,
+          ),
         child: Column(
           children: [
             Padding(
@@ -218,6 +246,7 @@ class _AttendanceDataTableFilterScreenState
                         BlocProvider.of<AttendanceCubit>(context)
                             .fetchFilteredBranchAttendanceData(
                           widget.branchId,
+                          widget.clientId,
                           startDate!,
                           endDate!,
                         );

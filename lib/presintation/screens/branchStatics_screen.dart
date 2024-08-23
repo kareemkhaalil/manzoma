@@ -133,7 +133,18 @@ class BranchStatisticsScreen extends StatelessWidget {
                           List<AttendanceRecordModel> attendanceData =
                               snapshot.data!;
                           return GestureDetector(
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AttendanceDataTableScreen(
+                                    branchId: branch.branchId,
+                                    clientId: clientId,
+                                  ),
+                                ),
+                              );
+                            },
                             child: Card(
                               elevation: 3,
                               shape: RoundedRectangleBorder(

@@ -27,7 +27,7 @@ void main() {
 
   group('checkBranchCode', () {
     test('emits QRScanFailure when client ID is not found', () async {
-      when(mockHiveClientRepo.get('Prd3waZVUxy7htMPtJhe')).thenReturn(null);
+      when(mockHiveClientRepo.get('clientId')).thenReturn(null);
 
       qrScanCubit.checkBranchCode(
         '888888',
@@ -58,7 +58,7 @@ void main() {
 
   group('checkBranchCodeCheckOut', () {
     test('emits QRScanFailure when client ID is not found', () async {
-      when(mockHiveClientRepo.get('Prd3waZVUxy7htMPtJhe')).thenReturn(null);
+      when(mockHiveClientRepo.get('clientId')).thenReturn(null);
 
       qrScanCubit.checkBranchCodeCheckOut(
         '888888',

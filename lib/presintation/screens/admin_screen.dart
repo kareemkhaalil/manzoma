@@ -1,4 +1,5 @@
 import 'package:bashkatep/core/bloc/attend_cubit/attendance_cubit.dart';
+import 'package:bashkatep/core/models/client_model.dart';
 import 'package:bashkatep/presintation/screens/add_brach_screen.dart';
 import 'package:bashkatep/presintation/screens/add_user_screen.dart';
 import 'package:bashkatep/presintation/screens/branchStatics_screen.dart';
@@ -83,15 +84,19 @@ class AdminScreen extends StatelessWidget {
                       children: [
                         _buildMetricCard(
                             'عدد المستخدمين',
-                            '${clientData.users.length}',
+                            '${clientData!.users.length}',
                             'عدد المستخدمين الحاليين'),
+                        _buildMetricCard(
+                            'عدد المسؤولين',
+                            '${clientData.admins.length} / ${clientData.maxAdmins}',
+                            'عدد المسؤولين الحاليين'),
                         _buildMetricCard(
                             'جلسات الحضور والانصراف',
                             '${clientData.attendanceRecords.length}',
                             'عدد جلسات الحضور والانصراف'),
                         _buildMetricCard(
                             'عدد الفروع',
-                            '${clientData.branches.length}',
+                            '${clientData.branches.length}/${clientData.maxBranches}',
                             'عدد الفروع الحالي'),
                       ],
                     );
@@ -108,7 +113,7 @@ class AdminScreen extends StatelessWidget {
                     return const Center(child: CircularProgressIndicator());
                   } else if (state is AttendanceClientDataLoaded) {
                     final clientData = state.clientData;
-                    final totalUsers = clientData.users.length;
+                    final totalUsers = clientData!.users.length;
                     final totalBranches = clientData.branches.length;
                     final totalAttendance = clientData.attendanceRecords.length;
 
@@ -229,84 +234,110 @@ class AdminScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 20),
-              GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: size.width > 600 ? 5 : 2,
-                crossAxisSpacing: 30.0,
-                mainAxisSpacing: 10.0,
-                children: [
-                  _buildElevatedButton(
-                    context,
-                    Icons.add_business,
-                    'إضافة فرع',
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AddBranchScreen(),
+              BlocBuilder<AttendanceCubit, AttendanceState>(
+                builder: (context, state) {
+                  if (state is AttendanceLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is AttendanceClientDataLoaded) {
+                    final clientData = state.clientData;
+                    final bool isAddBranchDisabled =
+                        clientData!.branches.length >= clientData.maxBranches;
+                    final bool isAddAdminDisabled =
+                        clientData.admins.length >= clientData.maxAdmins;
+
+                    return GridView.count(
+                      shrinkWrap: true,
+                      crossAxisCount: size.width > 600 ? 5 : 2,
+                      crossAxisSpacing: 30.0,
+                      mainAxisSpacing: 10.0,
+                      children: [
+                        _buildElevatedButton(
+                          context,
+                          Icons.add_business,
+                          'إضافة فرع',
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AddBranchScreen(),
+                              ),
+                            );
+                          },
+                          isAddBranchDisabled,
                         ),
-                      );
-                    },
-                  ),
-                  _buildElevatedButton(
-                    context,
-                    Icons.person_add,
-                    'إضافة مستخدم',
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AddUserScreen(),
+                        _buildElevatedButton(
+                          context,
+                          Icons.person_add,
+                          'إضافة مسؤول',
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddUserScreen(
+                                  clientData: clientData,
+                                ),
+                              ),
+                            );
+                          },
+                          false,
                         ),
-                      );
-                    },
-                  ),
-                  _buildElevatedButton(
-                    context,
-                    Icons.business,
-                    'تقارير الفروع',
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BranchStatisticsScreen(),
+                        _buildElevatedButton(
+                          context,
+                          Icons.business,
+                          'تقارير الفروع',
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const BranchStatisticsScreen(),
+                              ),
+                            );
+                          },
+                          false,
                         ),
-                      );
-                    },
-                  ),
-                  _buildElevatedButton(
-                    context,
-                    Icons.business,
-                    'تقارير المستخدمين',
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              UserReportsScreen(clientId: clientId),
+                        _buildElevatedButton(
+                          context,
+                          Icons.person,
+                          'تقارير المستخدمين',
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    UserReportsScreen(clientId: clientId),
+                              ),
+                            );
+                          },
+                          false,
                         ),
-                      );
-                    },
-                  ),
-                  BlocBuilder<AttendanceCubit, AttendanceState>(
-                    builder: (context, state) {
-                      if (state is AttendanceLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (state is AttendanceFailure) {
-                        return Text('حدث خطأ: ${state.error}');
-                      }
-                      return _buildElevatedButton(
-                        context,
-                        Icons.file_download,
-                        "تحميل بيانات الحضور",
-                        () {
-                          cubit.exportAttendance(context, clientId);
-                        },
-                      );
-                    },
-                  )
-                ],
+                        BlocBuilder<AttendanceCubit, AttendanceState>(
+                          builder: (context, state) {
+                            if (state is AttendanceLoading) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
+                            if (state is AttendanceFailure) {
+                              return Text('حدث خطأ: ${state.error}');
+                            }
+                            return _buildElevatedButton(
+                              context,
+                              Icons.file_download,
+                              "تحميل بيانات الحضور",
+                              () {
+                                cubit.exportAttendance(context, clientId);
+                              },
+                              false,
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  } else if (state is AttendanceFailure) {
+                    return Text('حدث خطأ: ${state.error}');
+                  }
+                  return Container();
+                },
               ),
               const SizedBox(height: 20),
             ],
@@ -367,13 +398,13 @@ class AdminScreen extends StatelessWidget {
   }
 
   Widget _buildElevatedButton(BuildContext context, IconData icon, String label,
-      VoidCallback onPressed) {
+      VoidCallback onPressed, bool isDisabled) {
     final Size size = MediaQuery.of(context).size;
 
     return ElevatedButton(
-      onPressed: onPressed,
+      onPressed: isDisabled ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: isDisabled ? Colors.grey : Colors.blueAccent,
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),

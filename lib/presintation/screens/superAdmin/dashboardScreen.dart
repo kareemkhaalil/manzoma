@@ -68,7 +68,7 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
             appBar: AppBar(
-              title: const Text('Hello Evano 👋'),
+              title: const Text('Hello Kareem 👋'),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.search),

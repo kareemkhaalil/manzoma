@@ -235,20 +235,19 @@ class ClientDetailView extends StatelessWidget {
                                 child: Text('Edit'),
                               ),
                         SizedBox(height: 20),
-                        if (client.admins.isNotEmpty ||
-                            client.branches.isNotEmpty)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(18.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(18.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        if (client.admins.isNotEmpty ||
+                                            client.branches.isNotEmpty)
                                           Text(
                                             'Admins',
                                             style: TextStyle(
@@ -256,92 +255,92 @@ class ClientDetailView extends StatelessWidget {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          SizedBox(width: size.width * 0.1),
-                                          IconButton(
-                                            icon: Icon(Icons.add),
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AddUserScreenSuper(
-                                                          clientId: clientId),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: 8),
-                                      Container(
-                                        height: size.height * 0.3,
-                                        child: GridView.count(
-                                          crossAxisCount: 3,
-                                          shrinkWrap: true,
-                                          mainAxisSpacing: 8.0,
-                                          crossAxisSpacing: 8.0,
-                                          childAspectRatio: 2,
-                                          children: [
-                                            ...client.admins.map((adminn) =>
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            EditAdminScreen(
-                                                          clientId: clientId,
-                                                          admin: adminn,
-                                                          employeeId:
-                                                              adminn.employeeId,
-                                                        ),
+                                        SizedBox(width: size.width * 0.1),
+                                        IconButton(
+                                          icon: Icon(Icons.add),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AddUserScreenSuper(
+                                                        clientId: clientId),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 8),
+                                    Container(
+                                      height: size.height * 0.3,
+                                      child: GridView.count(
+                                        crossAxisCount: 3,
+                                        shrinkWrap: true,
+                                        mainAxisSpacing: 8.0,
+                                        crossAxisSpacing: 8.0,
+                                        childAspectRatio: 2,
+                                        children: [
+                                          ...client.admins.map((adminn) =>
+                                              GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          EditAdminScreen(
+                                                        clientId: clientId,
+                                                        admin: adminn,
+                                                        employeeId:
+                                                            adminn.employeeId,
                                                       ),
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        EdgeInsets.all(padding),
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          AppColors.colorGreen,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0),
                                                     ),
-                                                    child: Center(
-                                                      child: Text(
-                                                        adminn.name,
-                                                        style: TextStyle(
-                                                          fontSize: fontSize,
-                                                          color: Colors.white,
-                                                        ),
+                                                  );
+                                                },
+                                                child: Container(
+                                                  padding:
+                                                      EdgeInsets.all(padding),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.colorGreen,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10.0),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      adminn.name,
+                                                      style: TextStyle(
+                                                        fontSize: fontSize,
+                                                        color: Colors.white,
                                                       ),
                                                     ),
                                                   ),
-                                                )),
-                                          ],
-                                        ),
+                                                ),
+                                              )),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              Container(
-                                width: 1,
-                                height: size.height * 0.3,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(18.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
+                            ),
+                            SizedBox(width: 8),
+                            Container(
+                              width: 1,
+                              height: size.height * 0.3,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(18.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        if (client.admins.isNotEmpty ||
+                                            client.branches.isNotEmpty)
                                           Text(
                                             'Branches',
                                             style: TextStyle(
@@ -349,76 +348,75 @@ class ClientDetailView extends StatelessWidget {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          SizedBox(width: size.width * 0.1),
-                                          IconButton(
-                                            icon: Icon(Icons.add),
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AddBranchScreenSuper(
-                                                          clientId: clientId),
-                                                ),
-                                              );
-                                            },
-                                          ),
+                                        SizedBox(width: size.width * 0.1),
+                                        IconButton(
+                                          icon: Icon(Icons.add),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AddBranchScreenSuper(
+                                                        clientId: clientId),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 8),
+                                    Container(
+                                      height: size.height * 0.3,
+                                      child: GridView.count(
+                                        crossAxisCount: 3,
+                                        shrinkWrap: true,
+                                        mainAxisSpacing: 8.0,
+                                        crossAxisSpacing: 8.0,
+                                        childAspectRatio: 2,
+                                        children: [
+                                          ...client.branches.map(
+                                            (branch) => GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          EditBranchScreen(
+                                                        clientId: clientId,
+                                                        branch: branch,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                child: Container(
+                                                  padding:
+                                                      EdgeInsets.all(padding),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.colorGreen,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10.0),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      branch.name,
+                                                      style: TextStyle(
+                                                        fontSize: fontSize,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )),
+                                          )
                                         ],
                                       ),
-                                      SizedBox(height: 8),
-                                      Container(
-                                        height: size.height * 0.3,
-                                        child: GridView.count(
-                                          crossAxisCount: 3,
-                                          shrinkWrap: true,
-                                          mainAxisSpacing: 8.0,
-                                          crossAxisSpacing: 8.0,
-                                          childAspectRatio: 2,
-                                          children: [
-                                            ...client.branches.map(
-                                              (branch) => GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            EditBranchScreen(
-                                                          clientId: clientId,
-                                                          branch: branch,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        EdgeInsets.all(padding),
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          AppColors.colorGreen,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0),
-                                                    ),
-                                                    child: Center(
-                                                      child: Text(
-                                                        branch.name,
-                                                        style: TextStyle(
-                                                          fontSize: fontSize,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  )),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),

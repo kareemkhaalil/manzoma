@@ -75,7 +75,7 @@ class QRScanCubit extends Cubit<QRScanState> {
 
   Future<num> _checkLocation(BranchModel branch) async {
     Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.best,
+      desiredAccuracy: LocationAccuracy.medium,
     );
     Geodesy geodesy = Geodesy();
     LatLng branchLatLng = LatLng(
@@ -161,7 +161,8 @@ class QRScanCubit extends Cubit<QRScanState> {
 
       if (matchedBranch != null) {
         num distance = await _checkLocation(matchedBranch);
-        if (distance <= 5) {
+
+        if (distance <= 10) {
           String recordId =
               await addAttendanceRecord(matchedBranch, id, userName, clientId);
           await hiveAttendanceRepo.put('attendanceRecordId', recordId);
@@ -169,10 +170,14 @@ class QRScanCubit extends Cubit<QRScanState> {
 
           await firestoreHelper.updateAttendanceRecordWithSessionId(
               clientId, recordId, id);
+          debugPrint('check branch code session id : $recordId');
 
           emit(QRScanSuccess(matchedBranch, isCheckIn: true));
+
           controller.clear();
           if (context.mounted) {
+            debugPrint('check branch code session id : $recordId');
+
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -276,18 +281,35 @@ class QRScanCubit extends Cubit<QRScanState> {
   void checkBranchCodeCheckOut(String branchCode, BuildContext context) async {
     try {
       emit(QRScanLoading());
-      String? clientId = hiveClientRepo.get('clientId');
 
+      // استرجاع معرف العميل المخزن في Hive
+      String? clientId = hiveClientRepo.get('clientId');
       if (clientId == null) {
         emit(const QRScanFailure('Client ID not found.'));
         return;
       }
 
-      DocumentSnapshot clientSnapshot =
-          await firestoreHelper.getDocument('clients', clientId);
+      // استرجاع المعرف الخاص بسجل الحضور المخزن في Hive
+      String? attendanceRecordId = hiveAttendanceRepo.get('attendanceRecordId');
+      if (attendanceRecordId == null) {
+        emit(const QRScanFailure('لم يتم العثور على سجل الحضور'));
+        return;
+      }
+
+      // استرجاع وثيقة العميل من Firestore
+      DocumentSnapshot clientSnapshot;
+      try {
+        clientSnapshot = await firestoreHelper.getDocument('clients', clientId);
+      } catch (e) {
+        emit(QRScanFailure('Error fetching client document: $e'));
+        return;
+      }
+
+      // تحويل البيانات المسترجعة إلى كائن ClientModel
       ClientModel client = ClientModel.fromJson(
           clientSnapshot.data() as Map<String, dynamic>, clientSnapshot.id);
 
+      // البحث عن الفرع المطابق للكود المدخل
       BranchModel? matchedBranch;
       for (var branch in client.branches) {
         if (branch.qrCode == branchCode) {
@@ -297,27 +319,145 @@ class QRScanCubit extends Cubit<QRScanState> {
       }
 
       if (matchedBranch != null) {
-        num distance = await _checkLocation(matchedBranch);
-        if (distance <= 5) {
-          String? lastRecordId = hiveAttendanceRepo.get('attendanceRecordId');
+        // التحقق من الموقع الجغرافي
+        num distance;
+        try {
+          distance = await _checkLocation(matchedBranch);
+        } catch (e) {
+          emit(QRScanFailure('Error while checking location: $e'));
+          return;
+        }
 
-          if (lastRecordId != null) {
+        if (distance <= 10) {
+          // تحديث سجل الحضور بإضافة وقت الخروج
+          try {
+            debugPrint(
+                'Attempting to update attendance record with sessionId: $attendanceRecordId for client: $clientId');
             await firestoreHelper.updateAttendanceRecordWithCheckOut(
-                clientId, lastRecordId, Timestamp.now());
-            await hiveAttendanceRepo.delete('attendanceRecordId');
-            await hiveIsAttendRepo.put('isAttend', false);
-            emit(QRScanSuccess(matchedBranch, isCheckIn: false));
-          } else {
-            emit(const QRScanFailure('لم يتم العثور على سجل الحضور'));
+                clientId, attendanceRecordId, Timestamp.now());
+            debugPrint(
+                'Successfully updated attendance record with sessionId: $attendanceRecordId');
+          } catch (e) {
+            debugPrint('Error while updating attendance record: $e');
+            emit(QRScanFailure('Error while updating attendance record: $e'));
+            return;
           }
+
+          // حذف المعرف من Hive بعد إتمام التحديث
+          await hiveAttendanceRepo.delete('attendanceRecordId');
+          await hiveIsAttendRepo.put('isAttend', false);
+          emit(QRScanSuccess(matchedBranch, isCheckIn: false));
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BlocProvider(
+                create: (context) => QRScanCubit(),
+                child: const HomeScreen(),
+              ),
+            ),
+          );
         } else {
           emit(const QRScanFailure('انت خارج نطاق الفرع'));
         }
       } else {
         emit(const QRScanFailure('خطأ في كود الفرع'));
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Error while checking branch code for checkout: $e');
+      debugPrint('Stack trace: $stackTrace');
       emit(QRScanFailure('Error while checking branch code for checkout: $e'));
     }
   }
+
+  // void checkBranchCodeCheckOut(String branchCode, BuildContext context) async {
+  //   try {
+  //     emit(QRScanLoading());
+
+  //     // استرجاع معرف العميل المخزن في Hive
+  //     String? clientId = hiveClientRepo.get('clientId');
+  //     if (clientId == null) {
+  //       emit(const QRScanFailure('Client ID not found.'));
+  //       return;
+  //     }
+
+  //     // استرجاع المعرف الخاص بسجل الحضور المخزن في Hive
+  //     String? attendanceRecordId = hiveAttendanceRepo.get('attendanceRecordId');
+  //     if (attendanceRecordId == null) {
+  //       emit(const QRScanFailure('لم يتم العثور على سجل الحضور'));
+  //       return;
+  //     }
+
+  //     // استرجاع وثيقة العميل من Firestore
+  //     DocumentSnapshot clientSnapshot;
+  //     try {
+  //       clientSnapshot = await firestoreHelper.getDocument('clients', clientId);
+  //     } catch (e) {
+  //       emit(QRScanFailure('Error fetching client document: $e'));
+  //       return;
+  //     }
+
+  //     // تحويل البيانات المسترجعة إلى كائن ClientModel
+  //     ClientModel client = ClientModel.fromJson(
+  //         clientSnapshot.data() as Map<String, dynamic>, clientSnapshot.id);
+
+  //     // البحث عن الفرع المطابق للكود المدخل
+  //     BranchModel? matchedBranch;
+  //     for (var branch in client.branches) {
+  //       if (branch.qrCode == branchCode) {
+  //         matchedBranch = branch;
+  //         break;
+  //       }
+  //     }
+
+  //     if (matchedBranch != null) {
+  //       // التحقق من الموقع الجغرافي
+  //       num distance;
+  //       try {
+  //         distance = await _checkLocation(matchedBranch);
+  //       } catch (e) {
+  //         emit(QRScanFailure('Error while checking location: $e'));
+  //         return;
+  //       }
+  //       // تحديث سجل الحضور بإضافة وقت الخروج
+  //       try {
+  //         await firestoreHelper.updateAttendanceRecordWithCheckOut(
+  //             clientId, attendanceRecordId, Timestamp.now());
+  //       } catch (e) {
+  //         emit(QRScanFailure('Error while updating attendance record: ${e}'));
+  //         return;
+  //       }
+
+  //       // حذف المعرف من Hive بعد إتمام التحديث
+  //       await hiveAttendanceRepo.delete('attendanceRecordId');
+  //       await hiveIsAttendRepo.put('isAttend', false);
+  //       emit(QRScanSuccess(matchedBranch, isCheckIn: false));
+
+  //       // التحقق من أن المستخدم داخل نطاق الفرع
+  //       // if (distance <= 5) {
+  //       //   // تحديث سجل الحضور بإضافة وقت الخروج
+  //       //   try {
+  //       //     await firestoreHelper.updateAttendanceRecordWithCheckOut(
+  //       //         clientId, attendanceRecordId, Timestamp.now());
+  //       //   } catch (e) {
+  //       //     emit(QRScanFailure('Error while updating attendance record: $e'));
+  //       //     return;
+  //       //   }
+
+  //       //   // حذف المعرف من Hive بعد إتمام التحديث
+  //       //   await hiveAttendanceRepo.delete('attendanceRecordId');
+  //       //   await hiveIsAttendRepo.put('isAttend', false);
+  //       //   emit(QRScanSuccess(matchedBranch, isCheckIn: false));
+  //       // } else {
+  //       //   emit(const QRScanFailure('انت خارج نطاق الفرع'));
+  //       // }
+  //     } else {
+  //       emit(const QRScanFailure('خطأ في كود الفرع'));
+  //     }
+  //   } catch (e, stackTrace) {
+  //     debugPrint('Error while checking branch code for checkout: ${e}');
+  //     debugPrint('Stack trace: $stackTrace');
+  //     emit(
+  //         QRScanFailure('Error while checking branch code for checkout: ${e}'));
+  //   }
+  // }
 }

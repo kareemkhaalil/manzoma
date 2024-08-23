@@ -27,6 +27,7 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
   Future<void> login(
       String username, String password, BuildContext context) async {
     try {
@@ -45,8 +46,12 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
       if (superAdminSnapshot.docs.isNotEmpty) {
         var superAdmin = superAdminSnapshot.docs.first;
         if (superAdmin['pass'] == password) {
-          email = superAdmin['email'];
-          userRole = superAdmin['role'];
+          email = superAdmin['email'] as String?;
+          userRole = superAdmin['role'] as String?;
+          if (email == null || userRole == null) {
+            emit(const AuthLoginFailure('Invalid super admin data.'));
+            return;
+          }
           await roleBox.put('userRole', userRole);
           debugPrint("Hive role (super_admin): ${roleBox.get('userRole')}");
         } else {
@@ -71,6 +76,10 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
             if (admin.userName == username && admin.password == password) {
               email = admin.email;
               userRole = admin.role;
+              if (email == null || userRole == null) {
+                emit(const AuthLoginFailure('Invalid admin data.'));
+                return;
+              }
               await clientId.put('clientId', client.clientId.toString());
               await roleBox.put('userRole', userRole);
               userFound = true;
@@ -85,8 +94,11 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
             if (user.userName == username && user.password == password) {
               email = user.email;
               userRole = user.role;
+              if (email == null || userRole == null) {
+                emit(const AuthLoginFailure('Invalid user data.'));
+                return;
+              }
               await clientId.put('clientId', client.clientId.toString());
-
               await roleBox.put('userRole', userRole);
               userFound = true;
               debugPrint('is User : ${user.role}  ${user.name}');
@@ -103,9 +115,18 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
         }
       }
 
+      // طباعة بيانات الاعتماد قبل تسجيل الدخول في Firebase
+      debugPrint(
+          "Attempting to sign in with email: $email, password: $password");
+
+      if (email == null || email.isEmpty) {
+        emit(const AuthLoginFailure('Email not found.'));
+        return;
+      }
+
       UserCredential userCredential =
           await _firebaseAuth.signInWithEmailAndPassword(
-        email: email!,
+        email: email,
         password: password,
       );
 
@@ -124,13 +145,15 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
         emit(const AuthLoginSuccess(isAdmin: false, isSuperAdmin: false));
       }
     } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuth error: ${e.message}');
       emit(AuthLoginFailure('FirebaseAuth error: ${e.message}'));
     } catch (e) {
+      debugPrint('An unexpected error occurred: $e');
       emit(AuthLoginFailure('An unexpected error occurred: $e'));
     }
   }
 
-  refresh() {
+  void refresh() {
     emit(AuthLoginInitial());
   }
 

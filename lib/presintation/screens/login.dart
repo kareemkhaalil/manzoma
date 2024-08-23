@@ -158,7 +158,7 @@ class LoginScreen extends StatelessWidget {
                                   prefixIcon: Icons.lock,
                                   hintText: 'ادخل كلمة السر',
                                   keyboardType: TextInputType.text,
-                                  obscureText: true,
+                                  obscureText: false,
                                   validator: Validator().validatePassword,
                                   controller: cubit.passwordController,
                                 ),
