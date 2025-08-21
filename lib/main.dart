@@ -1,107 +1,83 @@
-import 'package:bashkatep/core/bloc/super_admin/superAdmin_cubit.dart';
-import 'package:bashkatep/observer.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:bashkatep/core/bloc/admin/add_branch_cubit/add_branch_cubit.dart';
-import 'package:bashkatep/core/bloc/admin/add_user_cubit/add_user_cubit.dart';
-import 'package:bashkatep/core/bloc/attend_cubit/attendance_cubit.dart';
-import 'package:bashkatep/core/bloc/attend_cubit/qr_cubit.dart';
-import 'package:bashkatep/core/bloc/auth_cubit/auth_login_cubit.dart';
-import 'package:bashkatep/core/bloc/form_validator/form_validator_cubit.dart';
-import 'package:bashkatep/firebase_options.dart';
-import 'package:bashkatep/presintation/screens/splash_screen.dart';
-import 'package:bashkatep/core/helpers/firebase_helper/firestore_helper.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:huma_plus/features/clients/presentation/cubit/client_cubit.dart';
+import 'core/navigation/app_router.dart';
+
+// 👍 صحح الأسماء هنا:
+import 'core/storage/shared_pref_helper.dart' as storage;
+import 'core/di/injection_container.dart' as di;
+
+import 'features/auth/presentation/cubit/login_cubit.dart';
+import 'features/users/presentation/cubit/user_cubit.dart';
+import 'features/branches/presentation/cubit/branch_cubit.dart';
 
 void main() async {
-  Bloc.observer = MyBlocObserver();
   WidgetsFlutterBinding.ensureInitialized();
-  BindingBase.debugZoneErrorsAreFatal = true;
 
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await di.initializeSupabase();
+  await storage.SharedPrefHelper.init(); // ← ده الهيلبر الحقيقي
+  await di.init(); // ← بعده
 
-  // Initialize Hive
-  await Hive.initFlutter();
-
-  // Open all required boxes if not already open
-  await Future.wait([
-    Hive.openBox('token'),
-    Hive.openBox('userName'),
-    Hive.openBox('attendanceRecordId'),
-    Hive.openBox<bool>('isAttend'),
-    Hive.openBox<DateTime>('lastAttendanceTime'),
-    Hive.openBox('userRole'),
-    Hive.openBox('clientId'),
-  ]);
-
-  // Set default value for isAttend box
-  var isAttendBox = Hive.box<bool>('isAttend');
-  if (isAttendBox.get('isAttend') == null) {
-    await isAttendBox.put('isAttend', false);
-  }
-
-  // Create an instance of FirestoreHelper
-  final firestoreHelper = FirestoreHelper();
-
-  runApp(MyApp(firestoreHelper: firestoreHelper));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final FirestoreHelper firestoreHelper;
-
-  const MyApp({super.key, required this.firestoreHelper});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => AuthLoginCubit(
-            Hive.box('token'),
-            Hive.box('userName'),
-            Hive.box('userRole'), // Pass role box
-            Hive.box('clientId'),
+    return ScreenUtilInit(
+      designSize: const Size(1920, 1080),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<LoginCubit>(
+              create: (_) => di.sl<LoginCubit>(),
+            ),
+            BlocProvider<ClientCubit>(create: (_) => di.getIt<ClientCubit>()),
+            BlocProvider<UserCubit>(
+              create: (_) => di.sl<UserCubit>(),
+            ),
+            BlocProvider<BranchCubit>(
+              create: (_) => di.sl<BranchCubit>(),
+            ),
+          ],
+          child: MaterialApp.router(
+            title: 'HumaPlus - Smart Attendance & Payroll',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              primaryColor: const Color(0xFF2563EB),
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+              fontFamily: 'Inter',
+              appBarTheme: const AppBarTheme(
+                elevation: 0,
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black87,
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
+            ),
+            routerConfig: AppRouter.router,
           ),
-        ),
-        BlocProvider(
-          create: (context) => AttendanceCubit(),
-        ),
-        BlocProvider(
-          create: (context) => FormValidatorCubit(),
-        ),
-        BlocProvider(
-          create: (context) => QRScanCubit(),
-        ),
-        BlocProvider(
-          create: (context) => AuthAddUserCubit(),
-        ),
-        BlocProvider(
-          create: (context) =>
-              SuperAdminCubit(firestoreHelper: FirestoreHelper())..getClients(),
-        ),
-        BlocProvider(
-          create: (context) => AddBranchCubit(firestoreHelper),
-        ),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'الباشكاتب',
-        theme: ThemeData(
-          textTheme: GoogleFonts.cairoTextTheme(
-            Theme.of(context).textTheme,
-          ),
-          scaffoldBackgroundColor: Color(
-            0xffF8FAFF,
-          ),
-        ),
-        home: const SplashScreen(),
-      ),
+        );
+      },
     );
   }
 }

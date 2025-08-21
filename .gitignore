@@ -9,6 +9,7 @@
 .history
 .svn/
 migrate_working_dir/
+.zip
 
 # IntelliJ related
 *.iml
@@ -42,3 +43,14 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 node_modules
+lib (2).zip
+lib (3).zip
+lib (4).zip
+lib (5).zip
+lib (6).zip
+lib (7).zip
+lib 16-8.zip
+lib 8-16.zip
+lib.zip
+lib11.zip
+database_schema.sql
