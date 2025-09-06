@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
-import 'package:huma_plus/features/auth/data/models/user_model.dart';
+import 'package:manzoma/features/auth/data/models/user_model.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
-import 'package:huma_plus/core/entities/user_entity.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
 

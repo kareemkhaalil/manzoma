@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:huma_plus/core/entities/user_entity.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
 
 abstract class AuthState extends Equatable {
   const AuthState();

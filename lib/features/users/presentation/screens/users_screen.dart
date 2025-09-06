@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huma_plus/core/entities/user_entity.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 import '../cubit/user_cubit.dart';
-export 'package:huma_plus/core/entities/user_entity.dart';
+export 'package:manzoma/core/entities/user_entity.dart';
 import '../widgets/add_user_dialog.dart';
 import '../widgets/user_card.dart';
 

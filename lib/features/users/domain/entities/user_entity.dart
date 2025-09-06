@@ -1,5 +1,5 @@
 // import 'package:equatable/equatable.dart';
-// import 'package:huma_plus/core/enums/user_role.dart';
+// import 'package:manzoma/core/enums/user_role.dart';
 
 // class UserEntity extends Equatable {
 //   final String id;
@@ -64,4 +64,4 @@
 
 //   bool get hasBasicInfo => name != null && email != null;
 // }
-export 'package:huma_plus/core/entities/user_entity.dart';
+export 'package:manzoma/core/entities/user_entity.dart';

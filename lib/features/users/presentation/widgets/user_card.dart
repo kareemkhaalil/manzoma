@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huma_plus/core/entities/user_entity.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
 
 class UserCard extends StatelessWidget {
   final UserEntity user;

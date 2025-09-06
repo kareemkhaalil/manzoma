@@ -1,5 +1,5 @@
 // lib/features/auth/data/models/user_model.dart
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 import '../../domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {

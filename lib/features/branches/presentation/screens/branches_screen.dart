@@ -178,12 +178,12 @@ class _BranchesScreenState extends State<BranchesScreen> {
     );
   }
 
-  void _showAddBranchDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const AddBranchDialog(),
-    );
-  }
+  // void _showAddBranchDialog(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => const AddBranchDialog(),
+  //   );
+  // }
 
   void _showBranchDetails(BuildContext context, BranchEntity branch) {
     showDialog(

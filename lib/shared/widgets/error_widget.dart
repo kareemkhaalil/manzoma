@@ -35,13 +35,13 @@ class AppErrorWidget extends StatelessWidget {
                 width: 80.w,
                 height: 80.w,
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(40.r),
                 ),
                 child: Icon(
                   icon ?? Icons.error_outline,
                   size: 40.w,
-                  color: Colors.red[600],
+                  color: Theme.of(context).colorScheme.error,
                 ),
               ),
               SizedBox(height: 24.h),
@@ -149,13 +149,13 @@ class ErrorDialog extends StatelessWidget {
               width: 60.w,
               height: 60.w,
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.error.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(30.r),
               ),
               child: Icon(
                 Icons.error_outline,
                 size: 30.w,
-                color: Colors.red[600],
+                  color: Theme.of(context).colorScheme.error,
               ),
             ),
             SizedBox(height: 16.h),
@@ -375,7 +375,7 @@ class SuccessSnackBar {
             ),
           ],
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.r),
@@ -407,7 +407,7 @@ class ErrorSnackBar {
             ),
           ],
         ),
-        backgroundColor: Colors.red,
+        backgroundColor: Theme.of(context).colorScheme.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.r),

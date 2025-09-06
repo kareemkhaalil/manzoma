@@ -21,13 +21,13 @@ class BranchCubit extends Cubit<BranchState> {
     int? offset,
   }) async {
     emit(BranchLoading());
-    
+
     final result = await getBranchesUseCase(GetBranchesParams(
       tenantId: tenantId,
       limit: limit,
       offset: offset,
     ));
-    
+
     result.fold(
       (failure) => emit(BranchError(message: failure.message)),
       (branches) => emit(BranchLoaded(branches: branches)),
@@ -36,19 +36,17 @@ class BranchCubit extends Cubit<BranchState> {
 
   Future<void> createBranch(BranchEntity branch) async {
     emit(BranchLoading());
-    
-    final result = await createBranchUseCase(CreateBranchParams(branch: branch));
-    
+
+    final result =
+        await createBranchUseCase(CreateBranchParams(branch: branch));
+
     result.fold(
       (failure) => emit(BranchError(message: failure.message)),
       (createdBranch) {
-        // Refresh the branches list after creating a new branch
-        if (state is BranchLoaded) {
-          final currentBranches = (state as BranchLoaded).branches;
-          emit(BranchLoaded(branches: [...currentBranches, createdBranch]));
-        } else {
-          emit(BranchLoaded(branches: [createdBranch]));
-        }
+        emit(BranchCreated(branch: createdBranch)); // ✅ حالة جديدة
+
+        // بعد كده نجيب كل الفروع تاني عشان نعمل refresh
+        // getBranches(tenantId: createdBranch.tenantId);
       },
     );
   }
@@ -57,4 +55,3 @@ class BranchCubit extends Cubit<BranchState> {
     emit(BranchInitial());
   }
 }
-
