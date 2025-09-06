@@ -89,45 +89,34 @@ class _UsersScreenState extends State<UsersScreen> {
                     ),
                     SizedBox(width: 12.w),
                     Expanded(
-                      child: DropdownButtonFormField<UserRole>(
-                        value: selectedRole,
-                        hint: const Text('جميع الأدوار'),
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 8.h,
-                          ),
+                        child: DropdownButtonFormField<UserRole?>(
+                      value: selectedRole,
+                      hint: const Text('جميع الأدوار'),
+                      items: const [
+                        DropdownMenuItem<UserRole?>(
+                          value: null,
+                          child: Text('جميع الأدوار'),
                         ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: null,
-                            child: Text('جميع الأدوار'),
-                          ),
-                          DropdownMenuItem(
-                            value: UserRole.superAdmin,
-                            child: Text('مدير عام'),
-                          ),
-                          DropdownMenuItem(
-                            value: UserRole.cad,
-                            child: Text('مدير فرع'),
-                          ),
-                          DropdownMenuItem(
-                            value: UserRole.employee,
-                            child: Text('موظف'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            selectedRole = value;
-                          });
-                          // Reload users with filter
-                          context.read<UserCubit>().getUsers(role: value);
-                        },
-                      ),
-                    ),
+                        DropdownMenuItem<UserRole?>(
+                          value: UserRole.superAdmin,
+                          child: Text('مدير عام'),
+                        ),
+                        DropdownMenuItem<UserRole?>(
+                          value: UserRole.cad,
+                          child: Text('مدير فرع'),
+                        ),
+                        DropdownMenuItem<UserRole?>(
+                          value: UserRole.employee,
+                          child: Text('موظف'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedRole = value;
+                        });
+                        context.read<UserCubit>().getUsers(role: value);
+                      },
+                    )),
                   ],
                 ),
               ],
@@ -258,7 +247,7 @@ class _UsersScreenState extends State<UsersScreen> {
           children: [
             _buildDetailRow('البريد الإلكتروني', user.email ?? 'غير محدد'),
             _buildDetailRow('الهاتف', user.phone ?? 'غير محدد'),
-            _buildDetailRow('الدور', _getRoleDisplayName(user.role.toString())),
+            _buildDetailRow('الدور', _getRoleDisplayName(user.role)),
             _buildDetailRow('الراتب الأساسي', '${user.baseSalary} ج.م'),
             _buildDetailRow('الحالة', user.isActive ? 'نشط' : 'غير نشط'),
           ],
@@ -300,16 +289,14 @@ class _UsersScreenState extends State<UsersScreen> {
     );
   }
 
-  String _getRoleDisplayName(String role) {
+  String _getRoleDisplayName(UserRole role) {
     switch (role) {
-      case 'super_admin':
+      case UserRole.superAdmin:
         return 'مدير عام';
-      case 'cad':
-        return 'مدير فرع';
-      case 'employee':
+      case UserRole.cad:
+        return 'CAD';
+      case UserRole.employee:
         return 'موظف';
-      default:
-        return role;
     }
   }
 }

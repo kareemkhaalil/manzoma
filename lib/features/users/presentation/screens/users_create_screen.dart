@@ -484,19 +484,23 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<UserRole>(
+            DropdownButtonFormField<UserRole?>(
               value: _selectedRole,
               decoration: const InputDecoration(
                 labelText: 'Role',
                 prefixIcon: Icon(Icons.security),
                 border: OutlineInputBorder(),
               ),
-              items: _roles
-                  .map((role) => DropdownMenuItem<UserRole>(
-                        value: role,
-                        child: Text(role.name.toUpperCase()),
-                      ))
-                  .toList(),
+              items: const [
+                DropdownMenuItem<UserRole?>(
+                  value: UserRole.cad,
+                  child: Text('مدير فرع'),
+                ),
+                DropdownMenuItem<UserRole?>(
+                  value: UserRole.employee,
+                  child: Text('موظف'),
+                ),
+              ],
               onChanged: (UserRole? newValue) {
                 if (newValue != null) {
                   setState(() {

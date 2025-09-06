@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:manzoma/core/entities/user_entity.dart';
+import 'package:manzoma/core/enums/user_role.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserCard extends StatelessWidget {
   final UserEntity user;
@@ -30,8 +32,7 @@ class UserCard extends StatelessWidget {
               // Avatar
               CircleAvatar(
                 radius: 24.r,
-                backgroundColor:
-                    _getRoleColor(user.role.toString()).withOpacity(0.1),
+                backgroundColor: _getRoleColor(user.role).withOpacity(0.1),
                 child: user.avatar != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(24.r),
@@ -79,15 +80,14 @@ class UserCard extends StatelessWidget {
                             vertical: 4.h,
                           ),
                           decoration: BoxDecoration(
-                            color: _getRoleColor(user.role.toString())
-                                .withOpacity(0.1),
+                            color: _getRoleColor(user.role).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Text(
-                            _getRoleDisplayName(user.role.toString()),
+                            _getRoleDisplayName(user.role),
                             style: TextStyle(
                               fontSize: 12.sp,
-                              color: _getRoleColor(user.role.toString()),
+                              color: _getRoleColor(user.role),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -157,33 +157,33 @@ class UserCard extends StatelessWidget {
     return Icon(
       Icons.person,
       size: 24.w,
-      color: _getRoleColor(user.role.toString()),
+      color: _getRoleColor(user.role),
     );
   }
 
-  Color _getRoleColor(String role) {
+  Color _getRoleColor(UserRole role) {
     switch (role) {
-      case 'super_admin':
+      case UserRole.superAdmin:
         return Colors.purple;
-      case 'cad':
+      case UserRole.cad:
         return Colors.orange;
-      case 'employee':
+      case UserRole.employee:
         return Colors.blue;
       default:
         return Colors.grey;
     }
   }
 
-  String _getRoleDisplayName(String role) {
+  String _getRoleDisplayName(UserRole role) {
     switch (role) {
-      case 'super_admin':
+      case UserRole.superAdmin:
         return 'مدير عام';
-      case 'cad':
+      case UserRole.cad:
         return 'مدير فرع';
-      case 'employee':
+      case UserRole.employee:
         return 'موظف';
       default:
-        return role;
+        return role.toString();
     }
   }
 }
