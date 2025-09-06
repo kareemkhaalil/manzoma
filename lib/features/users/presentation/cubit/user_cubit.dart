@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
-import 'package:huma_plus/core/entities/user_entity.dart';
+import 'package:manzoma/core/enums/user_role.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
 import '../../domain/usecases/get_users_usecase.dart';
 import '../../domain/usecases/create_user_usecase.dart';
 
@@ -48,11 +48,11 @@ class UserCubit extends Cubit<UserState> {
       (failure) => emit(UserError(message: failure.message)),
       (createdUser) {
         // Refresh the users list after creating a new user
-        if (state is UserLoaded) {
-          final currentUsers = (state as UserLoaded).users;
-          emit(UserLoaded(users: [...currentUsers, createdUser]));
+        if (state is UserCreated) {
+          final currentUsers = (state as UserCreated).users;
+          emit(UserCreated(users: [...currentUsers, createdUser]));
         } else {
-          emit(UserLoaded(users: [createdUser]));
+          emit(UserCreated(users: [createdUser]));
         }
       },
     );

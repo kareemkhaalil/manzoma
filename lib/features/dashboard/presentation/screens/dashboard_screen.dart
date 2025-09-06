@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:huma_plus/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/core/storage/shared_pref_helper.dart';
 import '../../../../shared/widgets/app_sidebar.dart';
 import '../../../../shared/widgets/app_topbar.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 
 import '../widgets/dashboard_stats.dart';
 import '../widgets/recent_activities.dart';
@@ -25,7 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadUserRole() async {
-    final user = await SharedPrefHelper.getUser();
+    final user = SharedPrefHelper.getUser();
     print('Loaded user from SharedPref: $user');
     if (user != null) {
       setState(() {
@@ -72,7 +72,7 @@ class DashboardContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Welcome Section
-          _buildWelcomeSection(),
+          _buildWelcomeSection(context),
           const SizedBox(height: 24),
 
           // Stats Cards
@@ -99,7 +99,7 @@ class DashboardContent extends StatelessWidget {
     );
   }
 
-  Widget _buildWelcomeSection() {
+  Widget _buildWelcomeSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -107,8 +107,8 @@ class DashboardContent extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.blue.shade600,
-            Colors.blue.shade800,
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withOpacity(0.8),
           ],
         ),
         borderRadius: BorderRadius.circular(12),

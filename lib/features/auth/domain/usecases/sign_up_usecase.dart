@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
-import 'package:huma_plus/core/entities/user_entity.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
 import '../repositories/auth_repository.dart';
 
 class SignUpUseCase implements UseCase<UserEntity, SignUpParams> {

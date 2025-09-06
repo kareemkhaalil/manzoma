@@ -74,13 +74,19 @@ class BranchRemoteDataSourceImpl implements BranchRemoteDataSource {
   Future<BranchModel> createBranch(BranchModel branch) async {
     try {
       final response = await supabaseClient
-          .from('branches')
-          .insert(branch.toCreateJson())
+          .rpc(
+            'create_branch_and_update_tenant', // اسم الدالة
+            params: {
+              'branch_data': branch.toCreateJson()
+            }, // تمرير البيانات كـ JSON
+          )
           .select()
           .single();
 
+      print('Response from createBranch: $response');
       return BranchModel.fromJson(response);
     } catch (e) {
+      print('Error occurred while creating branch: $e');
       throw Exception('Failed to create branch: $e');
     }
   }

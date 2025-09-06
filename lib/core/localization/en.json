@@ -1,0 +1,17 @@
+{
+  "nav_dashboard": "Dashboard",
+  "nav_attendance": "Attendance",
+  "nav_attendance_check": "Check In/Out",
+  "nav_attendance_history": "Attendance History",
+  "nav_payroll": "Payroll",
+  "nav_payroll_my": "My Payroll",
+  "nav_payroll_management": "Payroll Management",
+  "nav_payroll_settings": "Payroll Settings",
+  "nav_branches": "Branches",
+  "nav_clients": "Clients",
+  "nav_users": "Users",
+  "nav_reports": "Reports",
+  "nav_settings": "Settings",
+  "nav_settings_profile": "Profile",
+  "nav_settings_company": "Company Settings"
+}
