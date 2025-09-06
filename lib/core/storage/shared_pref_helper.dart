@@ -1,8 +1,8 @@
 // lib/core/storage/shared_pref_helper.dart
 import 'dart:convert';
-import 'package:huma_plus/core/entities/user_entity.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:huma_plus/features/auth/data/models/user_model.dart';
+import 'package:manzoma/features/auth/data/models/user_model.dart';
 
 class SharedPrefHelper {
   static SharedPreferences? _prefs;

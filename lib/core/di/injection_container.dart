@@ -1,19 +1,21 @@
 import 'package:get_it/get_it.dart';
-import 'package:huma_plus/features/attendance/presentation/cubit/attendance_cubit.dart';
-import 'package:huma_plus/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:huma_plus/features/auth/presentation/cubit/login_cubit.dart';
-import 'package:huma_plus/features/clients/data/datasources/client_remote_datasource.dart';
-import 'package:huma_plus/features/clients/data/repositories/client_repository_impl.dart';
-import 'package:huma_plus/features/clients/domain/repositories/client_repository.dart';
-import 'package:huma_plus/features/clients/domain/usecases/create_client_usecase.dart';
-import 'package:huma_plus/features/clients/domain/usecases/delete_client_usecase.dart';
-import 'package:huma_plus/features/clients/domain/usecases/get_client_by_id_usecase.dart';
-import 'package:huma_plus/features/clients/domain/usecases/get_clients_usecase.dart';
-import 'package:huma_plus/features/clients/domain/usecases/update_client_usecase.dart';
-import 'package:huma_plus/features/clients/presentation/cubit/client_cubit.dart';
-import 'package:huma_plus/features/payroll/presentation/cubit/payroll_cubit.dart';
-import 'package:huma_plus/features/users/presentation/cubit/user_cubit.dart';
-import 'package:huma_plus/features/branches/presentation/cubit/branch_cubit.dart';
+import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
+import 'package:manzoma/core/theme/cubit/theme_cubit.dart';
+import 'package:manzoma/features/attendance/presentation/cubit/attendance_cubit.dart';
+import 'package:manzoma/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:manzoma/features/auth/presentation/cubit/login_cubit.dart';
+import 'package:manzoma/features/clients/data/datasources/client_remote_datasource.dart';
+import 'package:manzoma/features/clients/data/repositories/client_repository_impl.dart';
+import 'package:manzoma/features/clients/domain/repositories/client_repository.dart';
+import 'package:manzoma/features/clients/domain/usecases/create_client_usecase.dart';
+import 'package:manzoma/features/clients/domain/usecases/delete_client_usecase.dart';
+import 'package:manzoma/features/clients/domain/usecases/get_client_by_id_usecase.dart';
+import 'package:manzoma/features/clients/domain/usecases/get_clients_usecase.dart';
+import 'package:manzoma/features/clients/domain/usecases/update_client_usecase.dart';
+import 'package:manzoma/features/clients/presentation/cubit/client_cubit.dart';
+import 'package:manzoma/features/payroll/presentation/cubit/payroll_cubit.dart';
+import 'package:manzoma/features/users/presentation/cubit/user_cubit.dart';
+import 'package:manzoma/features/branches/presentation/cubit/branch_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Core
@@ -69,6 +71,8 @@ Future<void> init() async {
         updateClientUseCase: sl(),
         deleteClientUseCase: sl(),
       ));
+  sl.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+  sl.registerLazySingleton<LocaleCubit>(() => LocaleCubit());
 
   sl.registerFactory<LoginCubit>(() => LoginCubit());
 

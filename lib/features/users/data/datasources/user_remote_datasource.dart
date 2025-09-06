@@ -1,4 +1,4 @@
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 
@@ -51,7 +51,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       }
 
       if (role != null) {
-        query = query.eq('role', role);
+        query = query.eq('role', role.toValue());
       }
 
       if (limit != null) {
@@ -87,7 +87,18 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   @override
   Future<UserModel> createUser(UserModel user) async {
     try {
-      // Sign up the auth user
+      // 1. Check if user already exists by email
+      final existingUser = await supabaseClient
+          .from('users')
+          .select()
+          .eq('email', user.email!)
+          .maybeSingle();
+
+      if (existingUser != null) {
+        throw Exception('User with this email already exists');
+      }
+
+      // 2. Sign up the auth user
       final AuthResponse res = await supabaseClient.auth.signUp(
         email: user.email,
         password: user.password ?? 'example-password',
@@ -98,18 +109,28 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         throw Exception('Failed to create Supabase auth user');
       }
 
-      // insert into your custom users table
-      final response = await supabaseClient
+      // 3. Prepare user payload without password
+      final userDataPayload = user.toCreateJson();
+      userDataPayload['id'] = supabaseUser.id; // use auth id as PK
+      userDataPayload.remove('password');
+
+      // 4. Upsert into users table (avoids duplicate key error on retry)
+      final insertedUser = await supabaseClient
           .from('users')
-          .insert({
-            'id': supabaseUser.id, // ID from Supabase auth
-            ...user.toCreateJson(), // باقي البيانات من الموديل بتاعك
-          })
+          .upsert(userDataPayload, onConflict: 'id')
           .select()
           .single();
 
-      return UserModel.fromJson(response);
+      // 5. Increment tenant counter directly in DB
+      await supabaseClient.rpc(
+        'increment_current_users',
+        params: {'p_tenant_id': insertedUser['tenant_id']},
+      );
+
+      // 6. Return mapped user
+      return UserModel.fromJson(insertedUser);
     } catch (e) {
+      print('error in createUser: $e');
       throw Exception('Failed to create user: $e');
     }
   }

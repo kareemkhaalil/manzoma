@@ -80,6 +80,7 @@ class ClientRemoteDataSourceImpl implements ClientRemoteDataSource {
   }
 
   @override
+  @override
   Future<ClientModel> createClient({
     required String name,
     required String plan,
@@ -87,9 +88,13 @@ class ClientRemoteDataSourceImpl implements ClientRemoteDataSource {
     required DateTime subscriptionEnd,
     required double billingAmount,
     required String billingInterval,
+    bool isActive = true,
+    int allowedBranches = 1,
+    int allowedUsers = 5,
   }) async {
     try {
       print('Creating client with name: $name, plan: $plan');
+
       final response = await supabaseClient
           .from('tenants')
           .insert({
@@ -99,12 +104,16 @@ class ClientRemoteDataSourceImpl implements ClientRemoteDataSource {
             'subscription_end': subscriptionEnd.toIso8601String(),
             'billing_amount': billingAmount,
             'billing_interval': billingInterval,
-            'is_active': true,
+            'is_active': isActive,
+            'allowed_branches': allowedBranches,
+            'allowed_users': allowedUsers,
+            'current_branches': 0,
+            'current_users': 0,
           })
           .select()
           .single();
-      print('Client created successfully: $response');
 
+      print('Client created successfully: $response');
       return ClientModel.fromJson(response);
     } catch (e) {
       print('Error creating client: $e');

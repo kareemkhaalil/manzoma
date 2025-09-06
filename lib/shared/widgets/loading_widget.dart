@@ -77,7 +77,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
     final size = widget.size ?? 80.w;
     
     return Container(
-      color: widget.backgroundColor ?? Colors.white.withOpacity(0.9),
+      color: widget.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -97,9 +97,9 @@ class _LoadingWidgetState extends State<LoadingWidget>
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF2563EB),
-                              const Color(0xFF3B82F6),
-                              const Color(0xFF60A5FA),
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                              Theme.of(context).colorScheme.primary.withOpacity(0.6),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
