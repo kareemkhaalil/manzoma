@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="[[https://raw.githubusercontent.com/MaiiMagdy/Book-My-Movie-App/master/assets/images/logo.png](https://github.com/kareemkhaalil/manzoma/blob/develop/assets/images/manzoma%20animation.gif?raw=true)](https://raw.githubusercontent.com/kareemkhaalil/manzoma/refs/heads/develop/assets/images/manzoma%20animation.gif)" alt="manzoma logo" width="150"/>
+  <img src="https://raw.githubusercontent.com/kareemkhaalil/manzoma/refs/heads/develop/assets/images/manzoma%20animation.gif" alt="manzoma logo" width="150"/>
 
   <h1>manzoma | منظومة</h1>
 
