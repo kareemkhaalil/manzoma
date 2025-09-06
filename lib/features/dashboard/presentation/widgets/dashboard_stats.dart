@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 
 class DashboardStats extends StatelessWidget {
   final UserRole userRole;

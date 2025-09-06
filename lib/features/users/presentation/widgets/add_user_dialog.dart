@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 import '../../domain/entities/user_entity.dart';
 import '../cubit/user_cubit.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class AddUserDialog extends StatefulWidget {
   const AddUserDialog({super.key});
@@ -53,7 +55,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
                 ),
                 SizedBox(width: 12.w),
                 Text(
-                  'إضافة مستخدم جديد',
+                  FlutterLocalization.instance.getString(context, 'addNewUser'),
                   style: TextStyle(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.bold,
@@ -77,7 +79,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
                   TextFormField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      labelText: 'الاسم الكامل *',
+                      labelText: '${FlutterLocalization.instance.getString(context, 'fullName')} *',
                       prefixIcon: const Icon(Icons.person),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.r),
@@ -85,7 +87,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'يرجى إدخال الاسم الكامل';
+                        return FlutterLocalization.instance.getString(context, 'pleaseEnterName');
                       }
                       return null;
                     },
@@ -95,7 +97,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
                   TextFormField(
                     controller: _emailController,
                     decoration: InputDecoration(
-                      labelText: 'البريد الإلكتروني *',
+                      labelText: '${FlutterLocalization.instance.getString(context, 'email')} *',
                       prefixIcon: const Icon(Icons.email),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.r),
@@ -104,11 +106,11 @@ class _AddUserDialogState extends State<AddUserDialog> {
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'يرجى إدخال البريد الإلكتروني';
+                        return FlutterLocalization.instance.getString(context, 'pleaseEnterEmail');
                       }
                       if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                           .hasMatch(value)) {
-                        return 'يرجى إدخال بريد إلكتروني صحيح';
+                        return FlutterLocalization.instance.getString(context, 'pleaseEnterValidEmail');
                       }
                       return null;
                     },
@@ -118,7 +120,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
                   TextFormField(
                     controller: _phoneController,
                     decoration: InputDecoration(
-                      labelText: 'رقم الهاتف',
+                      labelText: FlutterLocalization.instance.getString(context, 'phone'),
                       prefixIcon: const Icon(Icons.phone),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.r),
@@ -131,24 +133,24 @@ class _AddUserDialogState extends State<AddUserDialog> {
                   DropdownButtonFormField<UserRole>(
                     value: _selectedRole,
                     decoration: InputDecoration(
-                      labelText: 'الدور *',
+                      labelText: '${FlutterLocalization.instance.getString(context, 'role')} *',
                       prefixIcon: const Icon(Icons.work),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                     ),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: UserRole.employee,
-                        child: Text('موظف'),
+                        child: Text(FlutterLocalization.instance.getString(context, 'employee')),
                       ),
                       DropdownMenuItem(
                         value: UserRole.cad,
-                        child: Text('مدير فرع'),
+                        child: Text(FlutterLocalization.instance.getString(context, 'branchManager')),
                       ),
                       DropdownMenuItem(
                         value: UserRole.superAdmin,
-                        child: Text('مدير عام'),
+                        child: Text(FlutterLocalization.instance.getString(context, 'superAdmin')),
                       ),
                     ],
                     onChanged: (value) {
@@ -162,7 +164,8 @@ class _AddUserDialogState extends State<AddUserDialog> {
                   TextFormField(
                     controller: _salaryController,
                     decoration: InputDecoration(
-                      labelText: 'الراتب الأساسي (ج.م)',
+                      labelText:
+                          '${FlutterLocalization.instance.getString(context, 'basicSalary')} (${FlutterLocalization.instance.getString(context, 'currency')})',
                       prefixIcon: const Icon(Icons.attach_money),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.r),
@@ -173,7 +176,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
                       if (value != null && value.isNotEmpty) {
                         final salary = double.tryParse(value);
                         if (salary == null || salary < 0) {
-                          return 'يرجى إدخال راتب صحيح';
+                          return FlutterLocalization.instance.getString(context, 'pleaseEnterValidSalary');
                         }
                       }
                       return null;
@@ -184,7 +187,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
                   Row(
                     children: [
                       Text(
-                        'حالة المستخدم:',
+                        '${FlutterLocalization.instance.getString(context, 'userStatus')}:',
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w500,
@@ -200,7 +203,9 @@ class _AddUserDialogState extends State<AddUserDialog> {
                         },
                       ),
                       Text(
-                        _isActive ? 'نشط' : 'غير نشط',
+                        _isActive
+                            ? FlutterLocalization.instance.getString(context, 'active')
+                            : FlutterLocalization.instance.getString(context, 'inactive'),
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: _isActive ? Colors.green : Colors.red,
@@ -219,7 +224,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
-                      'إلغاء',
+                      FlutterLocalization.instance.getString(context, 'cancel'),
                       style: TextStyle(fontSize: 16.sp),
                     ),
                   ),
@@ -237,7 +242,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
                       ),
                     ),
                     child: Text(
-                      'إضافة',
+                      FlutterLocalization.instance.getString(context, 'add'),
                       style: TextStyle(fontSize: 16.sp),
                     ),
                   ),
@@ -272,8 +277,8 @@ class _AddUserDialogState extends State<AddUserDialog> {
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم إضافة المستخدم بنجاح'),
+        SnackBar(
+          content: Text(FlutterLocalization.instance.getString(context, 'userAddedSuccessfully')),
           backgroundColor: Colors.green,
         ),
       );

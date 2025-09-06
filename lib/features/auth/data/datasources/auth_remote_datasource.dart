@@ -1,6 +1,6 @@
-import 'package:huma_plus/core/enums/user_role.dart';
-import 'package:huma_plus/core/storage/shared_pref_helper.dart';
-import 'package:huma_plus/features/auth/domain/entities/user_entity.dart';
+import 'package:manzoma/core/enums/user_role.dart';
+import 'package:manzoma/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/features/auth/domain/entities/user_entity.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/supabase_client.dart';

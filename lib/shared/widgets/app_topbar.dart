@@ -1,10 +1,15 @@
+import 'package:manzoma/core/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
+import 'package:manzoma/core/theme/cubit/theme_cubit.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
-class AppTopBar extends StatelessWidget {
+class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
   final List<Widget>? actions;
-  
+
   const AppTopBar({
     super.key,
     this.title,
@@ -13,10 +18,14 @@ class AppTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localeCubit = context.watch<LocaleCubit>();
+    final themeCubit = context.watch<ThemeCubit>();
+    final isRtl = localeCubit.state.locale.languageCode == "ar";
+
     return Container(
       height: 70,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).appBarTheme.backgroundColor,
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -27,149 +36,192 @@ class AppTopBar extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
+          textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Page Title
+            // Title (expanded عشان ياخد المتبقي)
             if (title != null)
-              Text(
-                title!,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+              Expanded(
+                child: Text(
+                  title!,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).appBarTheme.foregroundColor,
+                  ),
                 ),
               ),
-            
-            const Spacer(),
-            
-            // Search Bar
-            Container(
-              width: 300,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search...',
-                  hintStyle: TextStyle(color: Colors.grey.shade500),
-                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-              ),
-            ),
-            
+
             const SizedBox(width: 16),
-            
-            // Notifications
-            IconButton(
-              icon: Stack(
-                children: [
-                  const Icon(Icons.notifications_outlined, size: 24),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 12,
-                        minHeight: 12,
-                      ),
-                      child: const Text(
-                        '3',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              onPressed: () {
-                // Handle notifications
-              },
+
+            // Search Bar
+            Expanded(
+              flex: 2,
+              child: _buildSearchBar(context, isRtl),
             ),
-            
-            const SizedBox(width: 8),
-            
-            // User Menu
-            PopupMenuButton<String>(
-              offset: const Offset(0, 50),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Theme.of(context).primaryColor,
-                    child: const Icon(Icons.person, color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
-                ],
-              ),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'profile',
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_outline),
-                      SizedBox(width: 12),
-                      Text('Profile'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'settings',
-                  child: Row(
-                    children: [
-                      Icon(Icons.settings_outlined),
-                      SizedBox(width: 12),
-                      Text('Settings'),
-                    ],
-                  ),
-                ),
-                const PopupMenuDivider(),
-                const PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, color: Colors.red),
-                      SizedBox(width: 12),
-                      Text('Logout', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
+
+            const SizedBox(width: 16),
+
+            // Actions Row
+            Row(
+              children: [
+                _buildThemeButton(themeCubit),
+                _buildLangButton(localeCubit),
+                _buildNotifications(),
+                _buildUserMenu(context),
+                if (actions != null) ...actions!,
               ],
-              onSelected: (value) {
-                switch (value) {
-                  case 'profile':
-                    context.go('/settings/profile');
-                    break;
-                  case 'settings':
-                    context.go('/settings');
-                    break;
-                  case 'logout':
-                    context.go('/login');
-                    break;
-                }
-              },
             ),
-            
-            // Custom Actions
-            if (actions != null) ...actions!,
           ],
         ),
       ),
     );
   }
-}
 
+  Widget _buildSearchBar(BuildContext context, bool rtl) {
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: TextField(
+        textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
+        decoration: InputDecoration(
+          hintText: FlutterLocalization.instance.getString(context, 'search'),
+          hintStyle: TextStyle(color: Colors.grey.shade500),
+          prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeButton(ThemeCubit themeCubit) {
+    return IconButton(
+      icon: Icon(
+        themeCubit.state.themeData.brightness == Brightness.dark
+            ? Icons.dark_mode
+            : Icons.light_mode,
+        color: Colors.grey.shade700,
+      ),
+      onPressed: () => themeCubit.toggleTheme(),
+    );
+  }
+
+  Widget _buildLangButton(LocaleCubit localeCubit) {
+    return IconButton(
+      icon: const Icon(Icons.language, color: Colors.blueAccent),
+      onPressed: () {
+        if (localeCubit.state.locale.languageCode == "en") {
+          localeCubit.changeLanguage("ar");
+          print(localeCubit.state.locale.languageCode);
+        } else {
+          localeCubit.changeLanguage("en");
+          print(localeCubit.state.locale.languageCode);
+        }
+      },
+    );
+  }
+
+  Widget _buildNotifications() {
+    return IconButton(
+      icon: Stack(
+        children: [
+          const Icon(Icons.notifications_outlined, size: 24),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              constraints: const BoxConstraints(minWidth: 12, minHeight: 12),
+              child: const Text(
+                '3',
+                style: TextStyle(color: Colors.white, fontSize: 8),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ],
+      ),
+      onPressed: () {},
+    );
+  }
+
+  Widget _buildUserMenu(BuildContext context) {
+    return PopupMenuButton<String>(
+      offset: const Offset(0, 50),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: Theme.of(context).primaryColor,
+            child: const Icon(Icons.person, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
+        ],
+      ),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'profile',
+          child: Row(
+            children: [
+              const Icon(Icons.person_outline),
+              const SizedBox(width: 12),
+              Text(FlutterLocalization.instance.getString(context, 'profile')),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'settings',
+          child: Row(
+            children: [
+              const Icon(Icons.settings_outlined),
+              const SizedBox(width: 12),
+              Text(FlutterLocalization.instance.getString(context, 'settings')),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'logout',
+          child: Row(
+            children: [
+              const Icon(Icons.logout, color: Colors.red),
+              const SizedBox(width: 12),
+              Text(FlutterLocalization.instance.getString(context, 'logout'),
+                  style: const TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+      onSelected: (value) {
+        switch (value) {
+          case 'profile':
+            context.go('/settings/profile');
+            break;
+          case 'settings':
+            context.go('/settings');
+            break;
+          case 'logout':
+            context.go('/login');
+            break;
+        }
+      },
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}

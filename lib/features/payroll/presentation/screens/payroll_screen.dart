@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:huma_plus/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
+import 'package:manzoma/core/storage/shared_pref_helper.dart';
 import 'package:intl/intl.dart';
 import '../cubit/payroll_cubit.dart';
 import '../cubit/payroll_state.dart';
 import '../../../../shared/widgets/custom_button.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class PayrollScreen extends StatelessWidget {
   const PayrollScreen({super.key});
@@ -70,15 +72,15 @@ class _PayrollViewState extends State<PayrollView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Payroll Management',
-                  style: TextStyle(
+                Text(
+                  FlutterLocalization.instance.getString(context, 'payrollManagement'),
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 CustomButton(
-                  text: 'Create Payroll',
+                  text: FlutterLocalization.instance.getString(context, 'createPayroll'),
                   onPressed: () => _showCreatePayrollDialog(context),
                   icon: Icons.add,
                 ),
@@ -91,7 +93,7 @@ class _PayrollViewState extends State<PayrollView> {
               children: [
                 Expanded(
                   child: _buildSummaryCard(
-                    'Total Salary',
+                    FlutterLocalization.instance.getString(context, 'totalSalary'),
                     '\$12,500',
                     Icons.attach_money,
                     Colors.green,
@@ -100,7 +102,7 @@ class _PayrollViewState extends State<PayrollView> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryCard(
-                    'This Month',
+                    FlutterLocalization.instance.getString(context, 'thisMonth'),
                     '\$4,200',
                     Icons.calendar_month,
                     Colors.blue,
@@ -109,7 +111,7 @@ class _PayrollViewState extends State<PayrollView> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryCard(
-                    'Pending',
+                    FlutterLocalization.instance.getString(context, 'pending'),
                     '3 Records',
                     Icons.pending,
                     Colors.orange,
@@ -118,7 +120,7 @@ class _PayrollViewState extends State<PayrollView> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryCard(
-                    'Paid',
+                    FlutterLocalization.instance.getString(context, 'paid'),
                     '12 Records',
                     Icons.check_circle,
                     Colors.green,
@@ -129,9 +131,9 @@ class _PayrollViewState extends State<PayrollView> {
             const SizedBox(height: 32),
 
             // Payroll History
-            const Text(
-              'Payroll History',
-              style: TextStyle(
+            Text(
+              FlutterLocalization.instance.getString(context, 'payrollHistory'),
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -143,8 +145,8 @@ class _PayrollViewState extends State<PayrollView> {
                 listener: (context, state) {
                   if (state is PayrollCreateSuccess) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('تم إنشاء كشف الراتب بنجاح'),
+                      SnackBar(
+                        content: Text(FlutterLocalization.instance.getString(context, 'payrollGenerated')),
                         backgroundColor: Colors.green,
                       ),
                     );
@@ -187,12 +189,12 @@ class _PayrollViewState extends State<PayrollView> {
                               ),
                             ),
                             title: Text(
-                              'Payroll - ${payroll.period}',
+                              '${FlutterLocalization.instance.getString(context, 'payroll')} - ${payroll.period}',
                               style:
                                   const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
-                              'Net Salary: \$${payroll.netSalary.toStringAsFixed(2)}',
+                              '${FlutterLocalization.instance.getString(context, 'netSalary')}: \$${payroll.netSalary.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -221,26 +223,26 @@ class _PayrollViewState extends State<PayrollView> {
                                 padding: const EdgeInsets.all(16.0),
                                 child: Column(
                                   children: [
-                                    _buildPayrollDetailRow('Basic Salary',
+                                    _buildPayrollDetailRow(FlutterLocalization.instance.getString(context, 'basicSalary'),
                                         '\$${payroll.basicSalary.toStringAsFixed(2)}'),
-                                    _buildPayrollDetailRow('Allowances',
+                                    _buildPayrollDetailRow(FlutterLocalization.instance.getString(context, 'allowances'),
                                         '\$${payroll.allowances.toStringAsFixed(2)}'),
-                                    _buildPayrollDetailRow('Overtime',
+                                    _buildPayrollDetailRow(FlutterLocalization.instance.getString(context, 'overtime'),
                                         '\$${payroll.overtime.toStringAsFixed(2)}'),
-                                    _buildPayrollDetailRow('Bonus',
+                                    _buildPayrollDetailRow(FlutterLocalization.instance.getString(context, 'bonus'),
                                         '\$${payroll.bonus.toStringAsFixed(2)}'),
-                                    _buildPayrollDetailRow('Deductions',
+                                    _buildPayrollDetailRow(FlutterLocalization.instance.getString(context, 'deductions'),
                                         '-\$${payroll.deductions.toStringAsFixed(2)}'),
                                     const Divider(),
-                                    _buildPayrollDetailRow('Net Salary',
+                                    _buildPayrollDetailRow(FlutterLocalization.instance.getString(context, 'netSalary'),
                                         '\$${payroll.netSalary.toStringAsFixed(2)}',
                                         isTotal: true),
                                     const SizedBox(height: 8),
-                                    _buildPayrollDetailRow('Working Days',
+                                    _buildPayrollDetailRow(FlutterLocalization.instance.getString(context, 'workingDays'),
                                         '${payroll.actualWorkingDays}/${payroll.workingDays}'),
                                     if (payroll.notes != null)
                                       _buildPayrollDetailRow(
-                                          'Notes', payroll.notes!),
+                                          FlutterLocalization.instance.getString(context, 'notes'), payroll.notes!),
                                   ],
                                 ),
                               ),
@@ -264,13 +266,13 @@ class _PayrollViewState extends State<PayrollView> {
                                     refresh: true,
                                   );
                             },
-                            child: const Text('Retry'),
+                            child: Text(FlutterLocalization.instance.getString(context, 'retry')),
                           ),
                         ],
                       ),
                     );
                   }
-                  return const Center(child: Text('No payroll data'));
+                  return Center(child: Text(FlutterLocalization.instance.getString(context, 'noPayrollData')));
                 },
               ),
             ),
@@ -365,13 +367,12 @@ class _PayrollViewState extends State<PayrollView> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Create New Payroll'),
-        content: const Text(
-            'This feature will open a form to create a new payroll record.'),
+        title: Text(FlutterLocalization.instance.getString(context, 'createNewPayroll')),
+        content: Text(FlutterLocalization.instance.getString(context, 'createNewPayrollDescription')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(FlutterLocalization.instance.getString(context, 'cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -389,7 +390,7 @@ class _PayrollViewState extends State<PayrollView> {
                     notes: 'Monthly payroll',
                   );
             },
-            child: const Text('Create'),
+            child: Text(FlutterLocalization.instance.getString(context, 'create')),
           ),
         ],
       ),

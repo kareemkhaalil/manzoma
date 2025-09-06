@@ -1,4 +1,4 @@
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 
@@ -87,7 +87,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   @override
   Future<UserModel> createUser(UserModel user) async {
     try {
-      // Sign up the auth user
+      // 1. Sign up the auth user
       final AuthResponse res = await supabaseClient.auth.signUp(
         email: user.email,
         password: user.password ?? 'example-password',
@@ -98,18 +98,28 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         throw Exception('Failed to create Supabase auth user');
       }
 
-      // insert into your custom users table
-      final response = await supabaseClient
+      // 2. Prepare user payload without password
+      final userDataPayload = user.toCreateJson();
+      userDataPayload['id'] = supabaseUser.id;
+      userDataPayload.remove('password');
+
+      // 3. Insert into users table
+      final insertedUser = await supabaseClient
           .from('users')
-          .insert({
-            'id': supabaseUser.id, // ID from Supabase auth
-            ...user.toCreateJson(), // باقي البيانات من الموديل بتاعك
-          })
+          .insert(userDataPayload)
           .select()
           .single();
 
-      return UserModel.fromJson(response);
+      // 4. Increment tenant counter directly in DB
+      await supabaseClient.rpc(
+        'increment_current_users', // لازم تعملها function في SQL زي ما قلتلك
+        params: {'p_tenant_id': insertedUser['tenant_id']},
+      );
+
+      // 5. Return user
+      return UserModel.fromJson(insertedUser);
     } catch (e) {
+      print('error in createUser: $e');
       throw Exception('Failed to create user: $e');
     }
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 import 'loading_widget.dart';
 import 'error_widget.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 // Enum for different app states
 enum AppState {
@@ -48,22 +50,22 @@ class AppStateWrapper extends StatelessWidget {
           message: loadingMessage,
           showLogo: showLoadingLogo,
         );
-      
+
       case AppState.error:
         return AppErrorWidget(
-          message: errorMessage ?? 'حدث خطأ غير متوقع',
+          message: errorMessage ?? FlutterLocalization.instance.getString(context, 'unexpectedError'),
           onRetry: onRetry,
         );
-      
+
       case AppState.empty:
         return EmptyStateWidget(
           title: emptyTitle,
-          message: emptyMessage ?? 'لا توجد بيانات للعرض',
+          message: emptyMessage ?? FlutterLocalization.instance.getString(context, 'noDataToShow'),
           icon: emptyIcon,
           onAction: onEmptyAction,
           actionText: emptyActionText,
         );
-      
+
       case AppState.success:
       case AppState.initial:
       default:
@@ -179,22 +181,21 @@ class AppStateBuilder extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (state) {
       case AppState.loading:
-        return loadingBuilder?.call() ?? 
-               LoadingWidget(message: loadingMessage);
-      
+        return loadingBuilder?.call() ?? LoadingWidget(message: loadingMessage);
+
       case AppState.error:
-        return errorBuilder?.call(errorMessage ?? 'حدث خطأ غير متوقع') ?? 
-               AppErrorWidget(
-                 message: errorMessage ?? 'حدث خطأ غير متوقع',
-                 onRetry: onRetry,
-               );
-      
+        return errorBuilder?.call(errorMessage ?? FlutterLocalization.instance.getString(context, 'unexpectedError')) ??
+            AppErrorWidget(
+              message: errorMessage ?? FlutterLocalization.instance.getString(context, 'unexpectedError'),
+              onRetry: onRetry,
+            );
+
       case AppState.empty:
-        return emptyBuilder?.call() ?? 
-               const EmptyStateWidget(
-                 message: 'لا توجد بيانات للعرض',
-               );
-      
+        return emptyBuilder?.call() ??
+            EmptyStateWidget(
+              message: FlutterLocalization.instance.getString(context, 'noDataToShow'),
+            );
+
       case AppState.success:
       case AppState.initial:
       default:
@@ -207,22 +208,21 @@ class AppStateBuilder extends StatelessWidget {
 extension BlocStateExtension on Object {
   AppState toAppState() {
     final stateType = runtimeType.toString();
-    
+
     if (stateType.contains('Loading')) {
       return AppState.loading;
     } else if (stateType.contains('Error')) {
       return AppState.error;
     } else if (stateType.contains('Empty')) {
       return AppState.empty;
-    } else if (stateType.contains('Loaded') || 
-               stateType.contains('Success') ||
-               stateType.contains('Created') ||
-               stateType.contains('Updated') ||
-               stateType.contains('Deleted')) {
+    } else if (stateType.contains('Loaded') ||
+        stateType.contains('Success') ||
+        stateType.contains('Created') ||
+        stateType.contains('Updated') ||
+        stateType.contains('Deleted')) {
       return AppState.success;
     } else {
       return AppState.initial;
     }
   }
 }
-

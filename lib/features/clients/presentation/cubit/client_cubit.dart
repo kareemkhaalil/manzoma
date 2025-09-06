@@ -62,32 +62,44 @@ class ClientCubit extends Cubit<ClientState> {
     );
   }
 
-  Future<void> createClient(
-      {required String name,
-      required String plan,
-      required DateTime subscriptionStart,
-      required DateTime subscriptionEnd,
-      required double billingAmount,
-      required String billingInterval,
-      bool isActive = true,
-      int? allowedBranches,
-      int? allowedUsers}) async {
+  Future<void> createClient({
+    required String name,
+    required String plan,
+    required DateTime subscriptionStart,
+    required DateTime subscriptionEnd,
+    required double billingAmount,
+    required String billingInterval,
+    bool isActive = true,
+    int allowedBranches = 1,
+    int allowedUsers = 5,
+  }) async {
     emit(ClientLoading());
+    print("DEBUG: ClientLoading emitted");
 
-    final result = await createClientUseCase(CreateClientParams(
-      name: name,
-      plan: plan,
-      subscriptionStart: subscriptionStart,
-      subscriptionEnd: subscriptionEnd,
-      billingAmount: billingAmount,
-      billingInterval: billingInterval,
-    ));
+    final result = await createClientUseCase(
+      CreateClientParams(
+        name: name,
+        plan: plan,
+        subscriptionStart: subscriptionStart,
+        subscriptionEnd: subscriptionEnd,
+        billingAmount: billingAmount,
+        billingInterval: billingInterval,
+        isActive: isActive,
+        allowedBranches: allowedBranches,
+        allowedUsers: allowedUsers,
+      ),
+    );
+
+    print("DEBUG: Result = $result");
 
     result.fold(
-      (failure) => emit(ClientError(message: failure.message)),
+      (failure) {
+        print("DEBUG: Failure = ${failure.message}");
+        emit(ClientError(message: failure.message));
+      },
       (client) {
+        print("DEBUG: Success = ${client.id}");
         emit(ClientCreated(client: client));
-        // Refresh the clients list
         getClients();
       },
     );

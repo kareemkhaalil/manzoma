@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:huma_plus/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:huma_plus/features/auth/presentation/cubit/auth_state.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
+import 'package:manzoma/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:manzoma/features/auth/presentation/cubit/auth_state.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_input.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -61,47 +63,42 @@ class _LoginViewState extends State<LoginView> {
           // Left Side - Branding
           Expanded(
             flex: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withOpacity(0.8),
-                  ],
+            child: Stack(
+              children: [
+                Image.asset(
+                  'assets/images/patternBlue.png',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  opacity: const AlwaysStoppedAnimation(0.1),
+                  filterQuality: FilterQuality.low,
                 ),
-              ),
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.business_center,
-                      size: 80,
-                      color: Colors.white,
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/Asset 1.png',
+                          width: 300,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          FlutterLocalization.instance.getString(context, 'smartAttendancePayroll'),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 24),
-                    Text(
-                      'HumaPlus',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Smart Attendance & Payroll Management',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white70,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
 
@@ -110,6 +107,7 @@ class _LoginViewState extends State<LoginView> {
             flex: 1,
             child: Container(
               padding: const EdgeInsets.all(48),
+              color: Theme.of(context).primaryColorDark,
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
@@ -119,21 +117,21 @@ class _LoginViewState extends State<LoginView> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'Welcome Back',
-                          style: TextStyle(
+                        Text(
+                          FlutterLocalization.instance.getString(context, 'welcomeBack'),
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: Colors.white,
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Sign in to your account',
+                          FlutterLocalization.instance.getString(context, 'signInToAccount'),
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.grey.shade600,
+                            color: Colors.grey.shade200,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -142,16 +140,17 @@ class _LoginViewState extends State<LoginView> {
                         // Email Field
                         CustomInput(
                           controller: _emailController,
-                          label: 'Email',
-                          hintText: 'Enter your email',
+                          label: FlutterLocalization.instance.getString(context, 'email'),
+                          hintText: FlutterLocalization.instance.getString(context, 'enterEmail'),
+                          labelColor: Colors.grey.shade200,
                           prefixIcon: Icons.email_outlined,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
+                              return FlutterLocalization.instance.getString(context, 'pleaseEnterEmail');
                             }
                             if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                                 .hasMatch(value)) {
-                              return 'Please enter a valid email';
+                              return FlutterLocalization.instance.getString(context, 'pleaseEnterValidEmail');
                             }
                             return null;
                           },
@@ -161,16 +160,17 @@ class _LoginViewState extends State<LoginView> {
                         // Password Field
                         CustomInput(
                           controller: _passwordController,
-                          label: 'Password',
-                          hintText: 'Enter your password',
+                          label: FlutterLocalization.instance.getString(context, 'password'),
+                          hintText: FlutterLocalization.instance.getString(context, 'enterPassword'),
+                          labelColor: Colors.grey.shade200,
                           prefixIcon: Icons.lock_outlined,
                           isPassword: true,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
+                              return FlutterLocalization.instance.getString(context, 'pleaseEnterPassword');
                             }
                             if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
+                              return FlutterLocalization.instance.getString(context, 'passwordMinLength');
                             }
                             return null;
                           },
@@ -184,7 +184,7 @@ class _LoginViewState extends State<LoginView> {
                             onPressed: () {
                               // Handle forgot password
                             },
-                            child: const Text('Forgot Password?'),
+                            child: Text(FlutterLocalization.instance.getString(context, 'forgotPassword')),
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -193,8 +193,9 @@ class _LoginViewState extends State<LoginView> {
                         BlocBuilder<AuthCubit, AuthState>(
                           builder: (context, state) {
                             return CustomButton(
-                              text: 'Sign In',
+                              text: FlutterLocalization.instance.getString(context, 'signIn'),
                               isLoading: state is AuthLoading,
+                              backgroundColor: const Color(0xff222DFF),
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
                                   context.read<AuthCubit>().signIn(
@@ -212,7 +213,7 @@ class _LoginViewState extends State<LoginView> {
                         const Divider(),
                         const SizedBox(height: 16),
                         Text(
-                          'Demo Accounts',
+                          FlutterLocalization.instance.getString(context, 'demoAccounts'),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -230,7 +231,7 @@ class _LoginViewState extends State<LoginView> {
                                   _emailController.text = 'admin@demo.com';
                                   _passwordController.text = 'demo123';
                                 },
-                                child: const Text('Admin'),
+                                child: Text(FlutterLocalization.instance.getString(context, 'admin')),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -240,7 +241,7 @@ class _LoginViewState extends State<LoginView> {
                                   _emailController.text = 'employee@demo.com';
                                   _passwordController.text = 'demo123';
                                 },
-                                child: const Text('Employee'),
+                                child: Text(FlutterLocalization.instance.getString(context, 'employee')),
                               ),
                             ),
                           ],
