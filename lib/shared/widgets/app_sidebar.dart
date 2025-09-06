@@ -5,7 +5,7 @@ import 'package:manzoma/core/navigation/role_based_navigation.dart';
 import 'package:manzoma/core/entities/user_entity.dart';
 import '../../core/storage/shared_pref_helper.dart';
 import 'package:manzoma/core/enums/user_role.dart';
-import 'package:manzoma/core/localization/app_localizations_extra.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class AppSidebar extends StatefulWidget {
   final bool isMobile;
@@ -50,10 +50,9 @@ class _AppSidebarState extends State<AppSidebar> {
     final currentRole = _currentUser?.role ?? UserRole.employee;
     final navigationItems =
         RoleBasedNavigation.getNavigationItemsForRole(currentRole);
-    final localizations = AppLocalizations.off(context);
 
     return Directionality(
-      textDirection: localizations.locale.languageCode == 'ar'
+      textDirection: FlutterLocalization.instance.getLanguageCode(context) == 'ar'
           ? TextDirection.rtl
           : TextDirection.ltr,
       child: Container(
@@ -139,7 +138,7 @@ class _AppSidebarState extends State<AppSidebar> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  _currentUser?.name ?? 'User',
+                                  _currentUser?.name ?? FlutterLocalization.instance.getString(context, 'user'),
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: widget.isMobile ? 12 : 14,
@@ -148,7 +147,7 @@ class _AppSidebarState extends State<AppSidebar> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  _currentUser?.email ?? 'user@example.com',
+                                  _currentUser?.email ?? FlutterLocalization.instance.getString(context, 'userEmail'),
                                   style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: widget.isMobile ? 10 : 12,
@@ -185,7 +184,6 @@ class _AppSidebarState extends State<AppSidebar> {
   Widget _buildNavigationItem(NavigationItem item) {
     final hasSubItems = item.subItems != null && item.subItems!.isNotEmpty;
     final isExpanded = expandedItem == item.titleKey;
-    final loc = AppLocalizations.off(context);
 
     final isActive = currentRoute == item.route ||
         (item.subItems?.any((sub) => currentRoute == sub.route) ?? false);
@@ -232,7 +230,7 @@ class _AppSidebarState extends State<AppSidebar> {
                   SizedBox(width: widget.isMobile ? 8 : 12),
                   Expanded(
                     child: Text(
-                      loc.translate(item.titleKey),
+                      FlutterLocalization.instance.getString(context, item.titleKey),
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight:
@@ -262,7 +260,6 @@ class _AppSidebarState extends State<AppSidebar> {
 
   Widget _buildSubNavigationItem(NavigationItem subItem) {
     final isActive = currentRoute == subItem.route;
-    final loc = AppLocalizations.off(context);
 
     return Material(
       color: Colors.transparent,
@@ -298,7 +295,7 @@ class _AppSidebarState extends State<AppSidebar> {
               SizedBox(width: widget.isMobile ? 8 : 12),
               Expanded(
                 child: Text(
-                  loc.translate(subItem.titleKey),
+                  FlutterLocalization.instance.getString(context, subItem.titleKey),
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
 import 'package:manzoma/core/theme/cubit/theme_cubit.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -90,7 +91,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       child: TextField(
         textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
         decoration: InputDecoration(
-          hintText: AppLocalizations.off(context).search,
+          hintText: FlutterLocalization.instance.getString(context, 'search'),
           hintStyle: TextStyle(color: Colors.grey.shade500),
           prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
           border: InputBorder.none,
@@ -178,7 +179,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               const Icon(Icons.person_outline),
               const SizedBox(width: 12),
-              Text(AppLocalizations.off(context).profile),
+              Text(FlutterLocalization.instance.getString(context, 'profile')),
             ],
           ),
         ),
@@ -188,7 +189,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               const Icon(Icons.settings_outlined),
               const SizedBox(width: 12),
-              Text(AppLocalizations.off(context).settings),
+              Text(FlutterLocalization.instance.getString(context, 'settings')),
             ],
           ),
         ),
@@ -199,7 +200,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               const Icon(Icons.logout, color: Colors.red),
               const SizedBox(width: 12),
-              Text(AppLocalizations.off(context).logout,
+              Text(FlutterLocalization.instance.getString(context, 'logout'),
                   style: const TextStyle(color: Colors.red)),
             ],
           ),

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../cubit/client_cubit.dart';
 import '../cubit/client_state.dart';
 import '../widgets/add_client_dialog.dart';
 import '../widgets/client_card.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class ClientsScreen extends StatelessWidget {
   const ClientsScreen({super.key});
@@ -83,9 +85,9 @@ class _ClientsViewState extends State<ClientsView> {
                   color: Colors.blue,
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Clients Management',
-                  style: TextStyle(
+                Text(
+                  FlutterLocalization.instance.getString(context, 'clientsManagement'),
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
@@ -93,7 +95,7 @@ class _ClientsViewState extends State<ClientsView> {
                 ),
                 const Spacer(),
                 CustomButton(
-                  text: 'Add Client',
+                  text: FlutterLocalization.instance.getString(context, 'addClient'),
                   onPressed: () => context.go('/clients/create'),
                   icon: Icons.add,
                 ),
@@ -114,22 +116,22 @@ class _ClientsViewState extends State<ClientsView> {
                   );
                 } else if (state is ClientCreated) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Client created successfully'),
+                    SnackBar(
+                      content: Text(FlutterLocalization.instance.getString(context, 'clientCreated')),
                       backgroundColor: Colors.green,
                     ),
                   );
                 } else if (state is ClientUpdated) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Client updated successfully'),
+                    SnackBar(
+                      content: Text(FlutterLocalization.instance.getString(context, 'clientUpdated')),
                       backgroundColor: Colors.green,
                     ),
                   );
                 } else if (state is ClientDeleted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Client deleted successfully'),
+                    SnackBar(
+                      content: Text(FlutterLocalization.instance.getString(context, 'clientDeleted')),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -183,7 +185,7 @@ class _ClientsViewState extends State<ClientsView> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Error loading clients',
+                          FlutterLocalization.instance.getString(context, 'errorLoadingClients'),
                           style: TextStyle(
                             fontSize: 18,
                             color: Colors.grey[600],
@@ -199,7 +201,7 @@ class _ClientsViewState extends State<ClientsView> {
                         ),
                         const SizedBox(height: 24),
                         CustomButton(
-                          text: 'Retry',
+                          text: FlutterLocalization.instance.getString(context, 'retry'),
                           onPressed: () =>
                               context.read<ClientCubit>().getClients(),
                         ),
@@ -208,8 +210,8 @@ class _ClientsViewState extends State<ClientsView> {
                   );
                 }
 
-                return const Center(
-                  child: Text('No clients found'),
+                return Center(
+                  child: Text(FlutterLocalization.instance.getString(context, 'noClientsFound')),
                 );
               },
             ),
@@ -243,12 +245,13 @@ class _ClientsViewState extends State<ClientsView> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Client'),
-        content: Text('Are you sure you want to delete "${client.name}"?'),
+        title: Text(FlutterLocalization.instance.getString(context, 'deleteClient')),
+        content: Text(
+            '${FlutterLocalization.instance.getString(context, 'areYouSureYouWantToDelete')} "${client.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(FlutterLocalization.instance.getString(context, 'cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -256,7 +259,7 @@ class _ClientsViewState extends State<ClientsView> {
               context.read<ClientCubit>().deleteClient(client.id);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(FlutterLocalization.instance.getString(context, 'delete')),
           ),
         ],
       ),

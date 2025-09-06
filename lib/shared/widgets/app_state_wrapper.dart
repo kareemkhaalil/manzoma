@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 import 'loading_widget.dart';
 import 'error_widget.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 // Enum for different app states
 enum AppState {
@@ -51,14 +53,14 @@ class AppStateWrapper extends StatelessWidget {
 
       case AppState.error:
         return AppErrorWidget(
-          message: errorMessage ?? 'حدث خطأ غير متوقع',
+          message: errorMessage ?? FlutterLocalization.instance.getString(context, 'unexpectedError'),
           onRetry: onRetry,
         );
 
       case AppState.empty:
         return EmptyStateWidget(
           title: emptyTitle,
-          message: emptyMessage ?? 'لا توجد بيانات للعرض',
+          message: emptyMessage ?? FlutterLocalization.instance.getString(context, 'noDataToShow'),
           icon: emptyIcon,
           onAction: onEmptyAction,
           actionText: emptyActionText,
@@ -182,16 +184,16 @@ class AppStateBuilder extends StatelessWidget {
         return loadingBuilder?.call() ?? LoadingWidget(message: loadingMessage);
 
       case AppState.error:
-        return errorBuilder?.call(errorMessage ?? 'حدث خطأ غير متوقع') ??
+        return errorBuilder?.call(errorMessage ?? FlutterLocalization.instance.getString(context, 'unexpectedError')) ??
             AppErrorWidget(
-              message: errorMessage ?? 'حدث خطأ غير متوقع',
+              message: errorMessage ?? FlutterLocalization.instance.getString(context, 'unexpectedError'),
               onRetry: onRetry,
             );
 
       case AppState.empty:
         return emptyBuilder?.call() ??
-            const EmptyStateWidget(
-              message: 'لا توجد بيانات للعرض',
+            EmptyStateWidget(
+              message: FlutterLocalization.instance.getString(context, 'noDataToShow'),
             );
 
       case AppState.success:

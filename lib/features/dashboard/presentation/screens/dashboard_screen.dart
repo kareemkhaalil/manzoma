@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 import 'package:manzoma/core/storage/shared_pref_helper.dart';
 import '../../../../shared/widgets/app_sidebar.dart';
 import '../../../../shared/widgets/app_topbar.dart';
 import 'package:manzoma/core/enums/user_role.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 import '../widgets/dashboard_stats.dart';
 import '../widgets/recent_activities.dart';
@@ -120,7 +122,7 @@ class DashboardContent extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _getWelcomeMessage(),
+                  _getWelcomeMessage(context),
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -129,7 +131,7 @@ class DashboardContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _getWelcomeSubtitle(),
+                  _getWelcomeSubtitle(context),
                   style: const TextStyle(
                     fontSize: 16,
                     color: Colors.white70,
@@ -148,25 +150,25 @@ class DashboardContent extends StatelessWidget {
     );
   }
 
-  String _getWelcomeMessage() {
+  String _getWelcomeMessage(BuildContext context) {
     switch (userRole) {
       case UserRole.superAdmin:
-        return 'Welcome, Super Admin!';
+        return FlutterLocalization.instance.getString(context, 'welcomeSuperAdmin');
       case UserRole.cad:
-        return 'Welcome, Admin!';
+        return FlutterLocalization.instance.getString(context, 'welcomeAdmin');
       case UserRole.employee:
-        return 'Welcome back!';
+        return FlutterLocalization.instance.getString(context, 'welcomeEmployee');
     }
   }
 
-  String _getWelcomeSubtitle() {
+  String _getWelcomeSubtitle(BuildContext context) {
     switch (userRole) {
       case UserRole.superAdmin:
-        return 'Manage all clients and system operations';
+        return FlutterLocalization.instance.getString(context, 'welcomeSubtitleSuperAdmin');
       case UserRole.cad:
-        return 'Manage your team and company operations';
+        return FlutterLocalization.instance.getString(context, 'welcomeSubtitleAdmin');
       case UserRole.employee:
-        return 'Track your attendance and view your information';
+        return FlutterLocalization.instance.getString(context, 'welcomeSubtitleEmployee');
     }
   }
 

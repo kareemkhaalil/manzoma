@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 import '../cubit/branch_cubit.dart';
 import '../../domain/entities/branch_entity.dart';
 import '../widgets/add_branch_dialog.dart';
 import '../widgets/branch_card.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class BranchesScreen extends StatefulWidget {
   const BranchesScreen({super.key});
@@ -30,7 +32,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          'إدارة الفروع',
+          FlutterLocalization.instance.getString(context, 'manageBranches'),
           style: TextStyle(
             fontSize: 24.sp,
             fontWeight: FontWeight.bold,
@@ -43,7 +45,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
           IconButton(
             onPressed: () => context.go('/branches/create'),
             icon: const Icon(Icons.add, color: Colors.white),
-            tooltip: 'إضافة فرع جديد',
+            tooltip: FlutterLocalization.instance.getString(context, 'addNewBranch'),
           ),
           SizedBox(width: 16.w),
         ],
@@ -61,7 +63,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
                 });
               },
               decoration: InputDecoration(
-                hintText: 'البحث عن فرع...',
+                hintText: FlutterLocalization.instance.getString(context, 'searchForBranch'),
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.r),
@@ -92,7 +94,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
                         ),
                         SizedBox(height: 16.h),
                         Text(
-                          'حدث خطأ: ${state.message}',
+                          '${FlutterLocalization.instance.getString(context, 'error')}: ${state.message}',
                           style: TextStyle(
                             fontSize: 16.sp,
                             color: Colors.red,
@@ -103,7 +105,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
                           onPressed: () {
                             context.read<BranchCubit>().getBranches();
                           },
-                          child: const Text('إعادة المحاولة'),
+                          child: Text(FlutterLocalization.instance.getString(context, 'retry')),
                         ),
                       ],
                     ),
@@ -133,7 +135,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
                           ),
                           SizedBox(height: 16.h),
                           Text(
-                            'لا توجد فروع',
+                            FlutterLocalization.instance.getString(context, 'noBranchesFound'),
                             style: TextStyle(
                               fontSize: 18.sp,
                               color: Colors.grey[600],
@@ -141,7 +143,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
                           ),
                           SizedBox(height: 8.h),
                           Text(
-                            'اضغط على + لإضافة فرع جديد',
+                            FlutterLocalization.instance.getString(context, 'pressToAddBranch'),
                             style: TextStyle(
                               fontSize: 14.sp,
                               color: Colors.grey[500],
@@ -194,17 +196,17 @@ class _BranchesScreenState extends State<BranchesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('العنوان', branch.fullAddress),
-            _buildDetailRow('خط العرض', branch.latitude.toStringAsFixed(6)),
-            _buildDetailRow('خط الطول', branch.longitude.toStringAsFixed(6)),
+            _buildDetailRow(FlutterLocalization.instance.getString(context, 'address'), branch.fullAddress),
+            _buildDetailRow(FlutterLocalization.instance.getString(context, 'latitude'), branch.latitude.toStringAsFixed(6)),
+            _buildDetailRow(FlutterLocalization.instance.getString(context, 'longitude'), branch.longitude.toStringAsFixed(6)),
             _buildDetailRow(
-                'نطاق الحضور', '${branch.radiusMeters.toStringAsFixed(0)} متر'),
+                FlutterLocalization.instance.getString(context, 'attendanceRadius'), '${branch.radiusMeters.toStringAsFixed(0)} ${FlutterLocalization.instance.getString(context, 'meter')}'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('إغلاق'),
+            child: Text(FlutterLocalization.instance.getString(context, 'close')),
           ),
         ],
       ),

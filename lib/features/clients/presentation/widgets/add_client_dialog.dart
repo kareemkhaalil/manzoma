@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_input.dart';
 import '../../domain/entities/client_entity.dart';
 import '../cubit/client_cubit.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class AddClientDialog extends StatefulWidget {
   final ClientEntity? client;
@@ -118,7 +120,9 @@ class _AddClientDialogState extends State<AddClientDialog> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      isEditing ? 'Edit Client' : 'Create New Client',
+                      isEditing
+                          ? FlutterLocalization.instance.getString(context, 'editClient')
+                          : FlutterLocalization.instance.getString(context, 'createNewClient'),
                       style: const TextStyle(
                           fontSize: 24, fontWeight: FontWeight.bold),
                     ),
@@ -138,18 +142,19 @@ class _AddClientDialogState extends State<AddClientDialog> {
                     Expanded(
                       child: CustomInput(
                         controller: _nameController,
-                        label: 'Company Name',
-                        hintText: 'Enter company name',
-                        validator: (value) =>
-                            value == null || value.isEmpty ? 'Required' : null,
+                        label: FlutterLocalization.instance.getString(context, 'companyName'),
+                        hintText: FlutterLocalization.instance.getString(context, 'enterCompanyName'),
+                        validator: (value) => value == null || value.isEmpty
+                            ? FlutterLocalization.instance.getString(context, 'required')
+                            : null,
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: CustomInput(
                         controller: _emailController,
-                        label: 'Email',
-                        hintText: 'Enter email address',
+                        label: FlutterLocalization.instance.getString(context, 'email'),
+                        hintText: FlutterLocalization.instance.getString(context, 'enterEmailAddress'),
                         keyboardType: TextInputType.emailAddress,
                       ),
                     ),
@@ -163,16 +168,16 @@ class _AddClientDialogState extends State<AddClientDialog> {
                     Expanded(
                       child: CustomInput(
                         controller: _phoneController,
-                        label: 'Phone',
-                        hintText: 'Enter phone number',
+                        label: FlutterLocalization.instance.getString(context, 'phone'),
+                        hintText: FlutterLocalization.instance.getString(context, 'enterPhoneNumber'),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: CustomInput(
                         controller: _websiteController,
-                        label: 'Website',
-                        hintText: 'Enter website URL',
+                        label: FlutterLocalization.instance.getString(context, 'website'),
+                        hintText: FlutterLocalization.instance.getString(context, 'enterWebsiteUrl'),
                       ),
                     ),
                   ],
@@ -182,16 +187,16 @@ class _AddClientDialogState extends State<AddClientDialog> {
 
                 CustomInput(
                   controller: _addressController,
-                  label: 'Address',
-                  hintText: 'Enter company address',
+                  label: FlutterLocalization.instance.getString(context, 'address'),
+                  hintText: FlutterLocalization.instance.getString(context, 'enterCompanyAddress'),
                 ),
 
                 const SizedBox(height: 16),
 
                 CustomInput(
                   controller: _descriptionController,
-                  label: 'Description',
-                  hintText: 'Optional description',
+                  label: FlutterLocalization.instance.getString(context, 'description'),
+                  hintText: FlutterLocalization.instance.getString(context, 'optionalDescription'),
                   maxLines: 3,
                 ),
 
@@ -204,7 +209,7 @@ class _AddClientDialogState extends State<AddClientDialog> {
                       child: DropdownButtonFormField<String>(
                         value: _selectedPlan,
                         decoration: InputDecoration(
-                          labelText: 'Plan',
+                          labelText: FlutterLocalization.instance.getString(context, 'plan'),
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8)),
                         ),
@@ -222,7 +227,7 @@ class _AddClientDialogState extends State<AddClientDialog> {
                     Expanded(
                       child: CustomInput(
                         controller: _billingAmountController,
-                        label: 'Billing Amount',
+                        label: FlutterLocalization.instance.getString(context, 'billingAmount'),
                         hintText: '0.00',
                         keyboardType: TextInputType.number,
                       ),
@@ -238,7 +243,7 @@ class _AddClientDialogState extends State<AddClientDialog> {
                       child: DropdownButtonFormField<String>(
                         value: _selectedBillingInterval,
                         decoration: InputDecoration(
-                          labelText: 'Billing Interval',
+                          labelText: FlutterLocalization.instance.getString(context, 'billingInterval'),
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8)),
                         ),
@@ -256,8 +261,8 @@ class _AddClientDialogState extends State<AddClientDialog> {
                     Expanded(
                       child: CustomInput(
                         controller: _allowedBranchesController,
-                        label: 'Allowed Branches',
-                        hintText: 'Number of branches',
+                        label: FlutterLocalization.instance.getString(context, 'allowedBranches'),
+                        hintText: FlutterLocalization.instance.getString(context, 'numberOfBranches'),
                         keyboardType: TextInputType.number,
                       ),
                     ),
@@ -268,8 +273,8 @@ class _AddClientDialogState extends State<AddClientDialog> {
 
                 CustomInput(
                   controller: _allowedUsersController,
-                  label: 'Allowed Users',
-                  hintText: 'Number of users',
+                  label: FlutterLocalization.instance.getString(context, 'allowedUsers'),
+                  hintText: FlutterLocalization.instance.getString(context, 'numberOfUsers'),
                   keyboardType: TextInputType.number,
                 ),
 
@@ -281,7 +286,7 @@ class _AddClientDialogState extends State<AddClientDialog> {
                     Expanded(
                       child: CustomInput(
                         controller: _subscriptionStartController,
-                        label: 'Subscription Start',
+                        label: FlutterLocalization.instance.getString(context, 'subscriptionStart'),
                         readOnly: true,
                         onTap: () => _selectDate(context, true),
                       ),
@@ -290,7 +295,7 @@ class _AddClientDialogState extends State<AddClientDialog> {
                     Expanded(
                       child: CustomInput(
                         controller: _subscriptionEndController,
-                        label: 'Subscription End',
+                        label: FlutterLocalization.instance.getString(context, 'subscriptionEnd'),
                         readOnly: true,
                         onTap: () => _selectDate(context, false),
                       ),
@@ -306,11 +311,13 @@ class _AddClientDialogState extends State<AddClientDialog> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
+                      child: Text(FlutterLocalization.instance.getString(context, 'cancel')),
                     ),
                     const SizedBox(width: 16),
                     CustomButton(
-                      text: isEditing ? 'Update Client' : 'Create Client',
+                      text: isEditing
+                          ? FlutterLocalization.instance.getString(context, 'updateClient')
+                          : FlutterLocalization.instance.getString(context, 'createClient'),
                       onPressed: _submitForm,
                     ),
                   ],

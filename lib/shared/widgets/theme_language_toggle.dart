@@ -5,14 +5,13 @@ import 'package:manzoma/core/theme/cubit/theme_cubit.dart';
 import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
 import 'package:manzoma/core/localization/app_localizations.dart';
 import 'package:manzoma/core/theme/cubit/theme_state.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class ThemeLanguageToggle extends StatelessWidget {
   const ThemeLanguageToggle({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.instance(context);
-
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -34,7 +33,7 @@ class ThemeLanguageToggle extends StatelessWidget {
                     children: [
                       const Icon(Icons.flag),
                       const SizedBox(width: 8),
-                      Text(localizations?.english ?? 'English'),
+                      Text(FlutterLocalization.instance.getString(context, 'english')),
                     ],
                   ),
                 ),
@@ -44,7 +43,7 @@ class ThemeLanguageToggle extends StatelessWidget {
                     children: [
                       const Icon(Icons.flag),
                       const SizedBox(width: 8),
-                      Text(localizations?.arabic ?? 'العربية'),
+                      Text(FlutterLocalization.instance.getString(context, 'arabic')),
                     ],
                   ),
                 ),
@@ -66,8 +65,8 @@ class ThemeLanguageToggle extends StatelessWidget {
                 context.read<ThemeCubit>().toggleTheme();
               },
               tooltip: isDark
-                  ? (localizations?.lightMode ?? 'Light Mode')
-                  : (localizations?.darkMode ?? 'Dark Mode'),
+                  ? FlutterLocalization.instance.getString(context, 'lightMode')
+                  : FlutterLocalization.instance.getString(context, 'darkMode'),
             );
           },
         ),

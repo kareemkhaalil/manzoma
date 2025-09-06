@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 import '../cubit/attendance_cubit.dart';
 import '../cubit/attendance_state.dart';
 import '../../../../shared/widgets/custom_button.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class AttendanceScreen extends StatelessWidget {
   const AttendanceScreen({super.key});
@@ -67,9 +69,9 @@ class _AttendanceViewState extends State<AttendanceView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Attendance Management',
-                  style: TextStyle(
+                Text(
+                  FlutterLocalization.instance.getString(context, 'attendanceManagement'),
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
@@ -107,7 +109,7 @@ class _AttendanceViewState extends State<AttendanceView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Current Time',
+                          FlutterLocalization.instance.getString(context, 'currentTime'),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -135,15 +137,15 @@ class _AttendanceViewState extends State<AttendanceView> {
                     listener: (context, state) {
                       if (state is AttendanceCheckInSuccess) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم تسجيل الحضور بنجاح'),
+                          SnackBar(
+                            content: Text(FlutterLocalization.instance.getString(context, 'checkInSuccess')),
                             backgroundColor: Colors.green,
                           ),
                         );
                       } else if (state is AttendanceCheckOutSuccess) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم تسجيل الانصراف بنجاح'),
+                          SnackBar(
+                            content: Text(FlutterLocalization.instance.getString(context, 'checkOutSuccess')),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -160,7 +162,7 @@ class _AttendanceViewState extends State<AttendanceView> {
                       return Row(
                         children: [
                           CustomButton(
-                            text: 'Check In',
+                            text: FlutterLocalization.instance.getString(context, 'checkIn'),
                             isLoading: state is AttendanceLoading,
                             onPressed: () {
                               context.read<AttendanceCubit>().checkIn(
@@ -173,7 +175,7 @@ class _AttendanceViewState extends State<AttendanceView> {
                           ),
                           const SizedBox(width: 16),
                           CustomButton(
-                            text: 'Check Out',
+                            text: FlutterLocalization.instance.getString(context, 'checkOut'),
                             isLoading: state is AttendanceLoading,
                             onPressed: () {
                               context.read<AttendanceCubit>().checkOut(
@@ -193,9 +195,9 @@ class _AttendanceViewState extends State<AttendanceView> {
             const SizedBox(height: 32),
 
             // Attendance History
-            const Text(
-              'Attendance History',
-              style: TextStyle(
+            Text(
+              FlutterLocalization.instance.getString(context, 'attendanceHistory'),
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -240,11 +242,11 @@ class _AttendanceViewState extends State<AttendanceView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (attendance.checkInTime != null)
-                                  Text('Check In: ${DateFormat('HH:mm').format(attendance.checkInTime!)}'),
+                                  Text('${FlutterLocalization.instance.getString(context, 'checkIn')}: ${DateFormat('HH:mm').format(attendance.checkInTime!)}'),
                                 if (attendance.checkOutTime != null)
-                                  Text('Check Out: ${DateFormat('HH:mm').format(attendance.checkOutTime!)}'),
+                                  Text('${FlutterLocalization.instance.getString(context, 'checkOut')}: ${DateFormat('HH:mm').format(attendance.checkOutTime!)}'),
                                 if (attendance.workingHours != null)
-                                  Text('Working Hours: ${attendance.workingHours}h'),
+                                  Text('${FlutterLocalization.instance.getString(context, 'workingHours')}: ${attendance.workingHours}h'),
                               ],
                             ),
                             trailing: Container(
@@ -282,13 +284,13 @@ class _AttendanceViewState extends State<AttendanceView> {
                                 refresh: true,
                               );
                             },
-                            child: const Text('Retry'),
+                            child: Text(FlutterLocalization.instance.getString(context, 'retry')),
                           ),
                         ],
                       ),
                     );
                   }
-                  return const Center(child: Text('No attendance data'));
+                  return Center(child: Text(FlutterLocalization.instance.getString(context, 'noAttendanceData')));
                 },
               ),
             ),
@@ -328,4 +330,3 @@ class _AttendanceViewState extends State<AttendanceView> {
     }
   }
 }
-

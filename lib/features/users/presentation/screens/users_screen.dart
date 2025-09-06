@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:manzoma/core/entities/user_entity.dart';
 import 'package:manzoma/core/enums/user_role.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 import '../cubit/user_cubit.dart';
 export 'package:manzoma/core/entities/user_entity.dart';
 import '../widgets/add_user_dialog.dart';
 import '../widgets/user_card.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class UsersScreen extends StatefulWidget {
   const UsersScreen({super.key});
@@ -32,7 +34,7 @@ class _UsersScreenState extends State<UsersScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          'إدارة المستخدمين',
+          FlutterLocalization.instance.getString(context, 'manageUsers'),
           style: TextStyle(
             fontSize: 24.sp,
             fontWeight: FontWeight.bold,
@@ -45,7 +47,7 @@ class _UsersScreenState extends State<UsersScreen> {
           IconButton(
             onPressed: () => _showAddUserDialog(context),
             icon: const Icon(Icons.add, color: Colors.white),
-            tooltip: 'إضافة مستخدم جديد',
+            tooltip: FlutterLocalization.instance.getString(context, 'addNewUser'),
           ),
           SizedBox(width: 16.w),
         ],
@@ -66,7 +68,7 @@ class _UsersScreenState extends State<UsersScreen> {
                     });
                   },
                   decoration: InputDecoration(
-                    hintText: 'البحث عن مستخدم...',
+                    hintText: FlutterLocalization.instance.getString(context, 'searchForUser'),
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
@@ -81,7 +83,7 @@ class _UsersScreenState extends State<UsersScreen> {
                 Row(
                   children: [
                     Text(
-                      'تصفية حسب الدور:',
+                      FlutterLocalization.instance.getString(context, 'filterByRole'),
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w500,
@@ -91,7 +93,7 @@ class _UsersScreenState extends State<UsersScreen> {
                     Expanded(
                       child: DropdownButtonFormField<UserRole>(
                         value: selectedRole,
-                        hint: const Text('جميع الأدوار'),
+                        hint: Text(FlutterLocalization.instance.getString(context, 'allRoles')),
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.r),
@@ -101,22 +103,22 @@ class _UsersScreenState extends State<UsersScreen> {
                             vertical: 8.h,
                           ),
                         ),
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: null,
-                            child: Text('جميع الأدوار'),
+                            child: Text(FlutterLocalization.instance.getString(context, 'allRoles')),
                           ),
                           DropdownMenuItem(
                             value: UserRole.superAdmin,
-                            child: Text('مدير عام'),
+                            child: Text(FlutterLocalization.instance.getString(context, 'superAdmin')),
                           ),
                           DropdownMenuItem(
                             value: UserRole.cad,
-                            child: Text('مدير فرع'),
+                            child: Text(FlutterLocalization.instance.getString(context, 'branchManager')),
                           ),
                           DropdownMenuItem(
                             value: UserRole.employee,
-                            child: Text('موظف'),
+                            child: Text(FlutterLocalization.instance.getString(context, 'employee')),
                           ),
                         ],
                         onChanged: (value) {
@@ -153,7 +155,7 @@ class _UsersScreenState extends State<UsersScreen> {
                         ),
                         SizedBox(height: 16.h),
                         Text(
-                          'حدث خطأ: ${state.message}',
+                          '${FlutterLocalization.instance.getString(context, 'error')}: ${state.message}',
                           style: TextStyle(
                             fontSize: 16.sp,
                             color: Colors.red,
@@ -164,7 +166,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           onPressed: () {
                             context.read<UserCubit>().getUsers();
                           },
-                          child: const Text('إعادة المحاولة'),
+                          child: Text(FlutterLocalization.instance.getString(context, 'retry')),
                         ),
                       ],
                     ),
@@ -195,7 +197,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           ),
                           SizedBox(height: 16.h),
                           Text(
-                            'لا توجد مستخدمين',
+                            FlutterLocalization.instance.getString(context, 'noUsersFound'),
                             style: TextStyle(
                               fontSize: 18.sp,
                               color: Colors.grey[600],
@@ -203,7 +205,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           ),
                           SizedBox(height: 8.h),
                           Text(
-                            'اضغط على + لإضافة مستخدم جديد',
+                            FlutterLocalization.instance.getString(context, 'pressToAddUser'),
                             style: TextStyle(
                               fontSize: 14.sp,
                               color: Colors.grey[500],
@@ -256,17 +258,17 @@ class _UsersScreenState extends State<UsersScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('البريد الإلكتروني', user.email ?? 'غير محدد'),
-            _buildDetailRow('الهاتف', user.phone ?? 'غير محدد'),
-            _buildDetailRow('الدور', _getRoleDisplayName(user.role.toString())),
-            _buildDetailRow('الراتب الأساسي', '${user.baseSalary} ج.م'),
-            _buildDetailRow('الحالة', user.isActive ? 'نشط' : 'غير نشط'),
+            _buildDetailRow(FlutterLocalization.instance.getString(context, 'email'), user.email ?? FlutterLocalization.instance.getString(context, 'notSpecified')),
+            _buildDetailRow(FlutterLocalization.instance.getString(context, 'phone'), user.phone ?? FlutterLocalization.instance.getString(context, 'notSpecified')),
+            _buildDetailRow(FlutterLocalization.instance.getString(context, 'role'), _getRoleDisplayName(user.role.toString())),
+            _buildDetailRow(FlutterLocalization.instance.getString(context, 'basicSalary'), '${user.baseSalary} ${FlutterLocalization.instance.getString(context, 'currency')}'),
+            _buildDetailRow(FlutterLocalization.instance.getString(context, 'status'), user.isActive ? FlutterLocalization.instance.getString(context, 'active') : FlutterLocalization.instance.getString(context, 'inactive')),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('إغلاق'),
+            child: Text(FlutterLocalization.instance.getString(context, 'close')),
           ),
         ],
       ),
@@ -303,11 +305,11 @@ class _UsersScreenState extends State<UsersScreen> {
   String _getRoleDisplayName(String role) {
     switch (role) {
       case 'super_admin':
-        return 'مدير عام';
+        return FlutterLocalization.instance.getString(context, 'superAdmin');
       case 'cad':
-        return 'مدير فرع';
+        return FlutterLocalization.instance.getString(context, 'branchManager');
       case 'employee':
-        return 'موظف';
+        return FlutterLocalization.instance.getString(context, 'employee');
       default:
         return role;
     }

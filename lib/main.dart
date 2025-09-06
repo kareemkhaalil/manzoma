@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
 
 import 'package:manzoma/core/di/injection_container.dart' as di;
 import 'package:manzoma/core/storage/shared_pref_helper.dart' as storage;
@@ -12,14 +13,15 @@ import 'package:manzoma/features/users/presentation/cubit/user_cubit.dart';
 
 import 'package:manzoma/core/theme/cubit/theme_cubit.dart';
 import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
-import 'core/localization/app_localizations.dart';
+import 'package:manzoma/core/localization/app_localizations_delegate.dart';
 import 'core/navigation/app_router.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.initializeSupabase();
   await storage.SharedPrefHelper.init();
-  await di.init(); // تأكد ان فيه register لـ ThemeCubit و LocaleCubit
+  await di.init();
 
   runApp(const MyApp());
 }
@@ -41,7 +43,7 @@ class MyApp extends StatelessWidget {
       child: Builder(
         builder: (context) {
           return ScreenUtilInit(
-            designSize: const Size(1920, 1080), // غيرها حسب التصميم عندك
+            designSize: const Size(1920, 1080),
             minTextAdapt: true,
             splitScreenMode: true,
             child: MaterialApp.router(
@@ -49,8 +51,16 @@ class MyApp extends StatelessWidget {
               title: 'Manzoma',
               theme: context.watch<ThemeCubit>().state.themeData,
               locale: context.watch<LocaleCubit>().state.locale,
-              supportedLocales: AppLocalizations.supportedLocales,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: const [
+                Locale(kEN),
+                Locale(kAR),
+              ],
+              localizationsDelegates: const [
+                AppLocalizationsDelegate(),
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
               routerConfig: AppRouter.router,
             ),
           );

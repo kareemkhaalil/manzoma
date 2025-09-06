@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class AppErrorWidget extends StatelessWidget {
   final String? title;
@@ -75,7 +77,7 @@ class AppErrorWidget extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: Text(retryText ?? 'إعادة المحاولة'),
+                label: Text(retryText ?? FlutterLocalization.instance.getString(context, 'retry')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
@@ -197,7 +199,7 @@ class ErrorDialog extends StatelessWidget {
                         Navigator.of(context).pop();
                         if (onDismiss != null) onDismiss!();
                       },
-                      child: const Text('إلغاء'),
+                      child: Text(FlutterLocalization.instance.getString(context, 'cancel')),
                     ),
                   ),
                   SizedBox(width: 12.w),
@@ -214,7 +216,7 @@ class ErrorDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
-                      child: Text(retryText ?? 'إعادة المحاولة'),
+                      child: Text(retryText ?? FlutterLocalization.instance.getString(context, 'retry')),
                     ),
                   ),
                 ] else ...[
@@ -231,7 +233,7 @@ class ErrorDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
-                      child: const Text('موافق'),
+                      child: Text(FlutterLocalization.instance.getString(context, 'ok')),
                     ),
                   ),
                 ],
@@ -256,11 +258,11 @@ class NetworkErrorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppErrorWidget(
-      title: 'مشكلة في الاتصال',
-      message: 'تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.',
+      title: FlutterLocalization.instance.getString(context, 'connectionProblem'),
+      message: FlutterLocalization.instance.getString(context, 'couldNotConnectToServer'),
       icon: Icons.wifi_off,
       onRetry: onRetry,
-      retryText: 'إعادة المحاولة',
+      retryText: FlutterLocalization.instance.getString(context, 'retry'),
     );
   }
 }
@@ -333,7 +335,7 @@ class EmptyStateWidget extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onAction,
                 icon: const Icon(Icons.add),
-                label: Text(actionText ?? 'إضافة جديد'),
+                label: Text(actionText ?? FlutterLocalization.instance.getString(context, 'addNew')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
@@ -417,4 +419,3 @@ class ErrorSnackBar {
     );
   }
 }
-
