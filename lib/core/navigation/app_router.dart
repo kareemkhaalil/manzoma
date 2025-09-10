@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
-import 'package:huma_plus/core/storage/shared_pref_helper.dart';
-import 'package:huma_plus/shared/widgets/app_sidebar.dart';
-import 'package:huma_plus/shared/widgets/app_topbar.dart';
+import 'package:manzoma/core/enums/user_role.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
+import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
+import 'package:manzoma/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/features/branches/domain/entities/branch_entity.dart';
+import 'package:manzoma/features/branches/presentation/screens/branches_edit_screen.dart';
+import 'package:manzoma/features/employee/presentation/screens/attendance_screen.dart';
+import 'package:manzoma/features/employee/presentation/screens/employee_home_screen.dart';
+import 'package:manzoma/features/users/presentation/screens/users_edit_screen.dart';
+import 'package:manzoma/shared/widgets/app_sidebar.dart';
+import 'package:manzoma/shared/widgets/app_topbar.dart';
+import 'package:manzoma/shared/widgets/splash_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_screen.dart';
@@ -12,25 +21,28 @@ import '../../features/branches/presentation/screens/branches_screen.dart';
 import '../../features/branches/presentation/screens/branches_create_screen.dart';
 import '../../features/users/presentation/screens/users_screen.dart';
 import '../../features/users/presentation/screens/users_create_screen.dart';
-import 'package:huma_plus/features/reports/presentation/screens/reports_screen.dart';
-import 'package:huma_plus/features/clients/presentation/screens/clients_screen.dart';
-import 'package:huma_plus/features/clients/presentation/screens/clients_create_screen.dart';
+import 'package:manzoma/features/reports/presentation/screens/reports_screen.dart';
+import 'package:manzoma/features/clients/presentation/screens/clients_screen.dart';
+import 'package:manzoma/features/clients/presentation/screens/clients_create_screen.dart';
 import '../navigation/route_names.dart';
 import '../navigation/navigation_service.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
     navigatorKey: NavigationService.navigatorKey,
-    initialLocation: RouteNames.login,
+    initialLocation: RouteNames.splash,
     redirect: (context, state) {
       final user = SharedPrefHelper.getUser();
       final loggedIn = user != null;
       final goingToLogin = state.matchedLocation == RouteNames.login;
+      final goingToSplash = state.matchedLocation == RouteNames.splash;
 
+      // نخلي السبلاش دايماً يشتغل
+      if (goingToSplash) return null;
       if (!loggedIn && !goingToLogin) return RouteNames.login;
       if (loggedIn && goingToLogin) return RouteNames.dashboard;
 
-      // حراسة سريعة على بعض الروتس (اختياري)
+      // حماية على بعض الروتس
       final role = user?.role ?? UserRole.employee;
       final loc = state.matchedLocation;
 
@@ -46,6 +58,11 @@ class AppRouter {
       return null;
     },
     routes: [
+      GoRoute(
+        path: RouteNames.splash,
+        name: 'splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: RouteNames.login,
         name: 'login',
@@ -96,9 +113,16 @@ class AppRouter {
       GoRoute(
         path: RouteNames.createUser,
         name: 'createUser',
-        builder: (context, state) => UsersCreateScreen(
-          isSuperAdmin: SharedPrefHelper.getUser()?.role == UserRole.superAdmin,
+        builder: (context, state) => const MainAppShell(
+          child: UsersCreateScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/users/edit',
+        builder: (context, state) {
+          final widget = state.extra as UsersEditScreen;
+          return widget;
+        },
       ),
 
       // Branches Routes (Super Admin & CAD only)
@@ -111,7 +135,16 @@ class AppRouter {
       GoRoute(
         path: RouteNames.createBranch,
         name: 'createBranch',
-        builder: (context, state) => const BranchesCreateScreen(),
+        builder: (context, state) =>
+            const MainAppShell(child: BranchesCreateScreen()),
+      ),
+      GoRoute(
+        path: '/branches/edit',
+        builder: (context, state) {
+          // استلام بيانات الفرع
+          final branch = state.extra as BranchEntity;
+          return BranchesEditScreen(editingBranch: branch);
+        },
       ),
 
       // Reports Routes
@@ -119,6 +152,16 @@ class AppRouter {
         path: RouteNames.reports,
         name: 'reports',
         builder: (context, state) => const MainAppShell(child: ReportsScreen()),
+      ),
+
+      GoRoute(
+        path: "/employee/home",
+        builder: (context, state) => const EmployeeHomeScreen(),
+      ),
+      GoRoute(
+        path: "/employee/attendance",
+        builder: (context, state) =>
+            const AttendanceEmployeeScreen(), // هنضيفها كمان
       ),
     ],
   );
@@ -157,68 +200,48 @@ class _MainAppShellState extends State<MainAppShell> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 768;
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 768;
+      final isLtr = Directionality.of(context) == TextDirection.ltr;
+      final localeCubit = context.watch<LocaleCubit>();
+      final isEnglish = localeCubit.state.locale.languageCode;
 
-        if (isMobile) {
-          // Mobile Layout with Drawer
-          return Scaffold(
-            key: _scaffoldKey,
-            appBar: AppBar(
-              title: const Text('HumaPlus'),
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              leading: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              ),
+      if (isMobile) {
+        // 📱 Mobile Layout with Drawer
+        return Scaffold(
+          key: _scaffoldKey,
+          appBar: AppTopBar(
+            title: AppLocalizations.off(context).dashboard,
+          ),
+          drawer: Drawer(
+            child: AppSidebar(
+              isMobile: true,
+              onItemTap: () => Navigator.of(context).pop(),
             ),
-            drawer: Drawer(
-              child: AppSidebar(
-                isMobile: true,
-                onItemTap: () => Navigator.of(context).pop(),
-              ),
-            ),
-            body: widget.child,
-          );
-        } else {
-          // Desktop Layout with Sidebar
-          return Scaffold(
-            body: Row(
-              children: [
-                // Sidebar Navigation
+          ),
+          body: widget.child,
+        );
+      } else {
+        // 💻 Desktop Layout with Sidebar (dynamic RTL/LTR)
+        return Scaffold(
+          body: Row(
+            children: [
+              if (isEnglish.isNotEmpty)
+                // if (isEnglish == 'en') const
                 const AppSidebar(isMobile: false),
-                // Main Content Area
-                Expanded(
-                  child: Column(
-                    children: [
-                      const AppTopBar(title: 'Dashboard'),
-                      Expanded(child: widget.child),
-                    ],
-                  ),
+              Expanded(
+                child: Column(
+                  children: [
+                    AppTopBar(title: AppLocalizations.off(context).dashboard),
+                    Expanded(child: widget.child),
+                  ],
                 ),
-              ],
-            ),
-          );
-        }
-      },
-    );
+              ),
+              // if (isEnglish == 'ar') const AppSidebar(isMobile: false),
+            ],
+          ),
+        );
+      }
+    });
   }
 }
-
-// Placeholder widgets - will be implemented in their respective files
-// class AppSidebar extends StatelessWidget {
-//   const AppSidebar({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       width: 250,
-//       color: Colors.grey[100],
-//       child: const Center(
-//         child: Text('Sidebar - To be implemented'),
-//       ),
-//     );
-//   }
-// }

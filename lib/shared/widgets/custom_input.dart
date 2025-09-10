@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomInput extends StatefulWidget {
   final TextEditingController? controller;
   final String? label;
   final String? hintText;
   final IconData? prefixIcon;
-  final IconData? suffixIcon;
+  final Widget? suffixIcon;
   final VoidCallback? onSuffixIconPressed;
   final bool isPassword;
   final bool enabled;
   final int? maxLines;
+  final Color? labelColor;
+  final Color? hintColor;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final void Function()? onTap;
@@ -32,6 +36,9 @@ class CustomInput extends StatefulWidget {
     this.onChanged,
     this.onTap,
     this.readOnly = false,
+    this.inputFormatters,
+    this.labelColor,
+    this.hintColor,
   });
 
   @override
@@ -63,10 +70,11 @@ class _CustomInputState extends State<CustomInput> {
         if (widget.label != null) ...[
           Text(
             widget.label!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
+              color: widget.labelColor ??
+                  Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -74,6 +82,7 @@ class _CustomInputState extends State<CustomInput> {
         TextFormField(
           controller: widget.controller,
           focusNode: _focusNode,
+          inputFormatters: const [],
           obscureText: widget.isPassword ? _obscureText : false,
           enabled: widget.enabled,
           maxLines: widget.maxLines,
@@ -85,14 +94,14 @@ class _CustomInputState extends State<CustomInput> {
           decoration: InputDecoration(
             hintText: widget.hintText,
             hintStyle: TextStyle(
-              color: Colors.grey.shade500,
+              color: widget.hintColor ?? Colors.grey.shade500,
               fontSize: 14,
             ),
             prefixIcon: widget.prefixIcon != null
                 ? Icon(
                     widget.prefixIcon,
-                    color: _focusNode.hasFocus 
-                        ? Theme.of(context).primaryColor 
+                    color: _focusNode.hasFocus
+                        ? Theme.of(context).primaryColor
                         : Colors.grey.shade500,
                     size: 20,
                   )
@@ -112,16 +121,13 @@ class _CustomInputState extends State<CustomInput> {
                   )
                 : widget.suffixIcon != null
                     ? IconButton(
-                        icon: Icon(
-                          widget.suffixIcon,
-                          color: Colors.grey.shade500,
-                          size: 20,
-                        ),
+                        icon: widget.suffixIcon!,
                         onPressed: widget.onSuffixIconPressed,
                       )
                     : null,
             filled: true,
-            fillColor: widget.enabled ? Colors.grey.shade50 : Colors.grey.shade100,
+            fillColor:
+                widget.enabled ? Colors.grey.shade50 : Colors.grey.shade100,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -155,4 +161,3 @@ class _CustomInputState extends State<CustomInput> {
     );
   }
 }
-

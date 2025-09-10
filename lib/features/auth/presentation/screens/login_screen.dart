@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:huma_plus/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:huma_plus/features/auth/presentation/cubit/auth_state.dart';
+import 'package:manzoma/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:manzoma/features/auth/presentation/cubit/auth_state.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_input.dart';
 
@@ -16,7 +16,17 @@ class LoginScreen extends StatelessWidget {
       child: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            context.go('/dashboard');
+            final role =
+                state.user.role; // اتأكد إن عندك user فيه role جاي من backend
+
+            if (role == 'employee') {
+              context.go('/employee/home');
+            } else if (role == 'cad') {
+              context.go('/dashboard');
+            } else {
+              // fallback لو الـ role مش معروف
+              context.go('/dashboard');
+            }
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -61,47 +71,42 @@ class _LoginViewState extends State<LoginView> {
           // Left Side - Branding
           Expanded(
             flex: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withOpacity(0.8),
-                  ],
+            child: Stack(
+              children: [
+                Image.asset(
+                  'assets/images/patternBlue.png',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  opacity: const AlwaysStoppedAnimation(0.1),
+                  filterQuality: FilterQuality.low,
                 ),
-              ),
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.business_center,
-                      size: 80,
-                      color: Colors.white,
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/Asset 1.png',
+                          width: 300,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Smart Attendance & Payroll Management',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 24),
-                    Text(
-                      'HumaPlus',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Smart Attendance & Payroll Management',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white70,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
 
@@ -110,6 +115,7 @@ class _LoginViewState extends State<LoginView> {
             flex: 1,
             child: Container(
               padding: const EdgeInsets.all(48),
+              color: Theme.of(context).primaryColorDark,
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
@@ -124,7 +130,7 @@ class _LoginViewState extends State<LoginView> {
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: Colors.white,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -133,7 +139,7 @@ class _LoginViewState extends State<LoginView> {
                           'Sign in to your account',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.grey.shade600,
+                            color: Colors.grey.shade200,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -144,6 +150,7 @@ class _LoginViewState extends State<LoginView> {
                           controller: _emailController,
                           label: 'Email',
                           hintText: 'Enter your email',
+                          labelColor: Colors.grey.shade200,
                           prefixIcon: Icons.email_outlined,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -163,6 +170,7 @@ class _LoginViewState extends State<LoginView> {
                           controller: _passwordController,
                           label: 'Password',
                           hintText: 'Enter your password',
+                          labelColor: Colors.grey.shade200,
                           prefixIcon: Icons.lock_outlined,
                           isPassword: true,
                           validator: (value) {
@@ -195,6 +203,7 @@ class _LoginViewState extends State<LoginView> {
                             return CustomButton(
                               text: 'Sign In',
                               isLoading: state is AuthLoading,
+                              backgroundColor: const Color(0xff222DFF),
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
                                   context.read<AuthCubit>().signIn(

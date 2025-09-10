@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:huma_plus/core/navigation/role_based_navigation.dart';
-import 'package:huma_plus/core/entities/user_entity.dart';
+import 'package:manzoma/core/localization/app_localizations.dart';
+import 'package:manzoma/core/navigation/role_based_navigation.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
 import '../../core/storage/shared_pref_helper.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
+import 'package:manzoma/core/localization/app_localizations_extra.dart';
 
 class AppSidebar extends StatefulWidget {
   final bool isMobile;
@@ -45,138 +47,146 @@ class _AppSidebarState extends State<AppSidebar> {
 
   @override
   Widget build(BuildContext context) {
-    final navigationItems = RoleBasedNavigation.getNavigationItemsForRole(
-        _currentUser?.role ?? UserRole.employee);
+    final currentRole = _currentUser?.role ?? UserRole.employee;
+    final navigationItems =
+        RoleBasedNavigation.getNavigationItemsForRole(currentRole);
+    final localizations = AppLocalizations.off(context);
 
-    return Container(
-      width: widget.isMobile ? double.infinity : 280,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: widget.isMobile
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-      ),
-      child: Column(
-        children: [
-          // Logo/Header Section
-          Container(
-            height: widget.isMobile ? 60 : 80,
-            padding: EdgeInsets.all(widget.isMobile ? 12 : 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.business_center,
-                  color: Colors.white,
-                  size: widget.isMobile ? 24 : 32,
-                ),
-                SizedBox(width: widget.isMobile ? 8 : 12),
-                Expanded(
-                  child: Text(
-                    'HumaPlus',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: widget.isMobile ? 16 : 20,
-                      fontWeight: FontWeight.bold,
+    return Directionality(
+      textDirection: localizations.locale.languageCode == 'ar'
+          ? TextDirection.rtl
+          : TextDirection.ltr,
+      child: Container(
+        width: widget.isMobile ? double.infinity : 280,
+        decoration: BoxDecoration(
+          boxShadow: widget.isMobile
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+        ),
+        child: Column(
+          children: [
+            // 🔹 Logo/Header Section (أبيض)
+            Container(
+              height: widget.isMobile ? 60 : 80,
+              padding: EdgeInsets.all(widget.isMobile ? 12 : 16),
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/images/Asset 1.png',
+                      width: widget.isMobile ? 100 : 160),
+                  if (widget.isMobile)
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.black),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
-                  ),
-                ),
-                if (widget.isMobile)
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-              ],
-            ),
-          ),
-
-          // Navigation Items
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(vertical: widget.isMobile ? 4 : 8),
-              itemCount: navigationItems.length,
-              itemBuilder: (context, index) {
-                final item = navigationItems[index];
-                return _buildNavigationItem(item);
-              },
-            ),
-          ),
-
-          // User Info Section
-          Container(
-            padding: EdgeInsets.all(widget.isMobile ? 12 : 16),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: Colors.grey.shade200),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: widget.isMobile ? 16 : 20,
-                  backgroundColor: Theme.of(context).primaryColor,
-                  child: Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: widget.isMobile ? 16 : 20,
-                  ),
-                ),
-                SizedBox(width: widget.isMobile ? 8 : 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _currentUser?.name ?? 'User',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: widget.isMobile ? 12 : 14,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+
+            // 🔹 باقي السايد بار (أزرق)
+            Expanded(
+              child: Container(
+                color: Theme.of(context).primaryColor,
+                child: Column(
+                  children: [
+                    // Navigation Items
+                    Expanded(
+                      child: ListView.builder(
+                        padding: EdgeInsets.symmetric(
+                            vertical: widget.isMobile ? 4 : 8),
+                        itemCount: navigationItems.length,
+                        itemBuilder: (context, index) {
+                          final item = navigationItems[index];
+                          return _buildNavigationItem(item);
+                        },
                       ),
-                      Text(
-                        _currentUser?.email ?? 'user@example.com',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: widget.isMobile ? 10 : 12,
+                    ),
+
+                    // User Info Section
+                    Container(
+                      padding: EdgeInsets.all(widget.isMobile ? 12 : 16),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                              color: Theme.of(context)
+                                  .dividerColor
+                                  .withOpacity(0.3)),
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: widget.isMobile ? 16 : 20,
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              Icons.person,
+                              color: Theme.of(context).primaryColor,
+                              size: widget.isMobile ? 16 : 20,
+                            ),
+                          ),
+                          SizedBox(width: widget.isMobile ? 8 : 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _currentUser?.name ?? 'User',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: widget.isMobile ? 12 : 14,
+                                    color: Colors.white,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  _currentUser?.email ?? 'user@example.com',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: widget.isMobile ? 10 : 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.logout,
+                              color: Colors.white,
+                              size: widget.isMobile ? 18 : 20,
+                            ),
+                            onPressed: () async {
+                              await SharedPrefHelper.clearUser();
+                              context.go('/login');
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: Icon(
-                    Icons.logout,
-                    color: Colors.grey.shade600,
-                    size: widget.isMobile ? 18 : 20,
-                  ),
-                  onPressed: () async {
-                    await SharedPrefHelper.clearUser();
-                    context.go('/login');
-                  },
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildNavigationItem(NavigationItem item) {
     final hasSubItems = item.subItems != null && item.subItems!.isNotEmpty;
-    final isExpanded = expandedItem == item.title;
+    final isExpanded = expandedItem == item.titleKey;
+    final loc = AppLocalizations.off(context);
+
     final isActive = currentRoute == item.route ||
         (item.subItems?.any((sub) => currentRoute == sub.route) ?? false);
 
@@ -188,7 +198,7 @@ class _AppSidebarState extends State<AppSidebar> {
             onTap: () {
               if (hasSubItems) {
                 setState(() {
-                  expandedItem = isExpanded ? null : item.title;
+                  expandedItem = isExpanded ? null : item.titleKey;
                 });
               } else {
                 context.go(item.route);
@@ -204,7 +214,7 @@ class _AppSidebarState extends State<AppSidebar> {
               ),
               decoration: BoxDecoration(
                 color: isActive
-                    ? Theme.of(context).primaryColor.withOpacity(0.1)
+                    ? Colors.white.withOpacity(0.15) // خلفية فاتحة عند التحديد
                     : null,
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -217,20 +227,16 @@ class _AppSidebarState extends State<AppSidebar> {
                   Icon(
                     item.icon,
                     size: widget.isMobile ? 18 : 20,
-                    color: isActive
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey.shade600,
+                    color: isActive ? Colors.white : Colors.white70,
                   ),
                   SizedBox(width: widget.isMobile ? 8 : 12),
                   Expanded(
                     child: Text(
-                      item.title,
+                      loc.translate(item.titleKey),
                       style: TextStyle(
-                        color: isActive
-                            ? Theme.of(context).primaryColor
-                            : Colors.grey.shade800,
+                        color: Colors.white,
                         fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.normal,
+                            isActive ? FontWeight.w700 : FontWeight.normal,
                         fontSize: widget.isMobile ? 12 : 14,
                       ),
                     ),
@@ -239,7 +245,7 @@ class _AppSidebarState extends State<AppSidebar> {
                     Icon(
                       isExpanded ? Icons.expand_less : Icons.expand_more,
                       size: widget.isMobile ? 18 : 20,
-                      color: Colors.grey.shade600,
+                      color: Colors.white70,
                     ),
                 ],
               ),
@@ -256,6 +262,7 @@ class _AppSidebarState extends State<AppSidebar> {
 
   Widget _buildSubNavigationItem(NavigationItem subItem) {
     final isActive = currentRoute == subItem.route;
+    final loc = AppLocalizations.off(context);
 
     return Material(
       color: Colors.transparent,
@@ -278,9 +285,7 @@ class _AppSidebarState extends State<AppSidebar> {
             bottom: 2,
           ),
           decoration: BoxDecoration(
-            color: isActive
-                ? Theme.of(context).primaryColor.withOpacity(0.1)
-                : null,
+            color: isActive ? Colors.white.withOpacity(0.15) : null,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Row(
@@ -288,19 +293,15 @@ class _AppSidebarState extends State<AppSidebar> {
               Icon(
                 subItem.icon,
                 size: widget.isMobile ? 16 : 18,
-                color: isActive
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey.shade500,
+                color: isActive ? Colors.white : Colors.white60,
               ),
               SizedBox(width: widget.isMobile ? 8 : 12),
               Expanded(
                 child: Text(
-                  subItem.title,
+                  loc.translate(subItem.titleKey),
                   style: TextStyle(
-                    color: isActive
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey.shade700,
-                    fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
+                    color: Colors.white,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                     fontSize: widget.isMobile ? 11 : 13,
                   ),
                 ),

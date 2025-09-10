@@ -6,9 +6,9 @@
 import 'dart:async' as _i4;
 
 import 'package:dartz/dartz.dart' as _i2;
-import 'package:huma_plus/core/error/failures.dart' as _i5;
-import 'package:huma_plus/core/entities/user_entity.dart' as _i6;
-import 'package:huma_plus/features/auth/domain/repositories/auth_repository.dart'
+import 'package:manzoma/core/error/failures.dart' as _i5;
+import 'package:manzoma/core/entities/user_entity.dart' as _i6;
+import 'package:manzoma/features/auth/domain/repositories/auth_repository.dart'
     as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 

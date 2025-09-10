@@ -1,0 +1,17 @@
+{
+  "nav_dashboard": "لوحة التحكم",
+  "nav_attendance": "الحضور",
+  "nav_attendance_check": "تسجيل دخول/خروج",
+  "nav_attendance_history": "سجل الحضور",
+  "nav_payroll": "الرواتب",
+  "nav_payroll_my": "راتبي",
+  "nav_payroll_management": "إدارة الرواتب",
+  "nav_payroll_settings": "إعدادات الرواتب",
+  "nav_branches": "الفروع",
+  "nav_clients": "العملاء",
+  "nav_users": "المستخدمين",
+  "nav_reports": "التقارير",
+  "nav_settings": "الإعدادات",
+  "nav_settings_profile": "الملف الشخصي",
+  "nav_settings_company": "إعدادات الشركة"
+}
