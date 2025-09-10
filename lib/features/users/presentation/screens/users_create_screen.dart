@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manzoma/core/enums/user_role.dart';
 import 'package:manzoma/core/di/injection_container.dart';
@@ -7,11 +8,9 @@ import 'package:manzoma/core/storage/shared_pref_helper.dart' as sp;
 
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_input.dart';
-
 import '../../../clients/domain/entities/client_entity.dart';
 import '../../../clients/presentation/cubit/client_cubit.dart';
 import '../../../clients/presentation/cubit/client_state.dart';
-
 import '../../domain/entities/user_entity.dart' as app_user;
 import '../cubit/user_cubit.dart';
 
@@ -24,59 +23,55 @@ class UsersCreateScreen extends StatefulWidget {
 
 class _UsersCreateScreenState extends State<UsersCreateScreen> {
   final _formKey = GlobalKey<FormState>();
-
-  // Controllers
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  final _passwordCtrl =
-      TextEditingController(); // --- جديد: حقل كلمة المرور ---
+  final _passwordCtrl = TextEditingController();
 
-  // --- جديد: متغيرات الحالة ---
   UserRole _selectedRole = UserRole.employee;
   ClientEntity? _selectedClient;
-  app_user.UserEntity? _currentUser;
   bool _isSuperAdmin = false;
   bool _isLimitReached = false;
 
   late final UserCubit _userCubit;
   late final ClientCubit _clientCubit;
 
-  // قائمة الأدوار المتاحة
-  final List<UserRole> _roles = [
-    UserRole.superAdmin,
-    UserRole.cad,
-    UserRole.employee
-  ];
+  List<UserRole> get _roles {
+    if (_isSuperAdmin) {
+      return [UserRole.superAdmin, UserRole.cad, UserRole.employee];
+    }
+    return [UserRole.cad, UserRole.employee];
+  }
 
   @override
   void initState() {
     super.initState();
-    // --- جديد: حقن الـ Cubits ---
     _userCubit = getIt<UserCubit>();
     _clientCubit = getIt<ClientCubit>();
-    _loadCurrentUser();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCurrentUser();
+    });
   }
 
-  // --- جديد: دالة لتحميل بيانات المستخدم الحالي وتحديد صلاحياته ---
   void _loadCurrentUser() {
     final user = sp.SharedPrefHelper.getUser();
     if (user != null) {
-      _currentUser = user;
-      _isSuperAdmin = user.role == UserRole.superAdmin;
+      if (mounted) {
+        setState(() {
+          _isSuperAdmin = user.role == UserRole.superAdmin;
+        });
+      }
+      print('Current user role: ${user.role}, isSuperAdmin: $_isSuperAdmin');
 
       if (_isSuperAdmin) {
-        // إذا كان سوبر أدمن، أحضر قائمة كل العملاء
         _clientCubit.getClients();
       } else {
-        // إذا كان مستخدم عادي، أنشئ كيان عميل بناءً على بياناته
         final clientForUser = ClientEntity(
           id: user.tenantId,
-          name: "My Company", // يمكنك استبدال هذا باسم الشركة الحقيقي
-          // باقي البيانات يمكن أن تكون افتراضية أو تُجلب من مصدر آخر
-          allowedUsers: 5, // مثال: عدد المستخدمين المسموح به
-          currentUsers: 2, // مثال: عدد المستخدمين الحالي
-          // ---
+          name: "My Company",
+          allowedUsers: 5,
+          currentUsers: 2,
           plan: "Free",
           subscriptionStart: DateTime.now(),
           subscriptionEnd: DateTime.now().add(const Duration(days: 30)),
@@ -88,24 +83,28 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
           allowedBranches: 1,
           currentBranches: 1,
         );
-        setState(() {
-          _selectedClient = clientForUser;
-          _updateClientLimits(_selectedClient); // تحقق من الحدود فوراً
-        });
+        if (mounted) {
+          setState(() {
+            _selectedClient = clientForUser;
+            _updateClientLimits(_selectedClient);
+          });
+        }
       }
+    } else {
+      print('No current user found');
     }
   }
 
-  // --- جديد: دالة مركزية للتحقق من حدود العميل ---
   void _updateClientLimits(ClientEntity? client) {
     if (client == null) {
-      setState(() => _isLimitReached = false);
+      if (mounted) setState(() => _isLimitReached = false);
       return;
     }
     final allowed = client.allowedUsers;
     final current = client.currentUsers;
     final remaining = (current != null) ? (allowed - current) : 1;
-    setState(() => _isLimitReached = remaining <= 0);
+
+    if (mounted) setState(() => _isLimitReached = remaining <= 0);
   }
 
   @override
@@ -136,18 +135,17 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
             onPressed: () => context.go('/users'),
           ),
         ),
-        // --- جديد: استخدام BlocConsumer للتعامل مع الحالات المختلفة ---
         body: BlocConsumer<UserCubit, UserState>(
           listener: (context, state) {
             if (state is UserCreated) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                      '✅ User "${state.users.first.name}" created successfully!'),
+                  content:
+                      Text('✅ User "${_nameCtrl.text}" created successfully!'),
                   backgroundColor: Colors.green,
                 ),
               );
-              context.go('/users'); // العودة للشاشة السابقة
+              context.go('/users');
             } else if (state is UserError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -195,7 +193,6 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header
                         Row(
                           children: [
                             Icon(Icons.person_add,
@@ -226,23 +223,14 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
                           ],
                         ),
                         const SizedBox(height: 24),
-
-                        // --- جديد: قسم اختيار العميل ---
                         buildClientSelection(),
                         const SizedBox(height: 16),
-
-                        // --- جديد: قسم عرض حدود المستخدمين ---
                         _buildClientLimitsStrip(),
-
-                        // --- جديد: رسالة التحذير عند تجاوز الحد ---
+                        const SizedBox(height: 16),
                         _buildLimitWarning(),
                         const SizedBox(height: 24),
-
-                        // --- معدّل: تمرير حالة التعطيل للحقول ---
                         _buildUserFields(isDisabled: _isLimitReached),
                         const SizedBox(height: 32),
-
-                        // --- معدّل: تمرير حالة التعطيل للأزرار ---
                         buildActionButtons(context, isLoading, _isLimitReached),
                       ],
                     ),
@@ -256,144 +244,47 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
     );
   }
 
-  // --- جديد: ودجت لعرض حدود العميل (مسموح/متبقي) ---
-  Widget _buildClientLimitsStrip() {
-    final allowed = _selectedClient?.allowedUsers;
-    final current = _selectedClient?.currentUsers;
-    final remaining =
-        (allowed != null && current != null) ? (allowed - current) : null;
-
-    return Row(
-      children: [
-        _miniInfoCard(
-          title: 'Allowed users',
-          value: allowed?.toString() ?? '--',
-          icon: Icons.verified_user,
-        ),
-        const SizedBox(width: 12),
-        _miniInfoCard(
-          title: 'Remaining',
-          value: remaining?.toString() ?? '--',
-          icon: Icons.person_add_alt_1,
-          valueColor:
-              (remaining != null && remaining <= 0) ? Colors.red : Colors.green,
-        ),
-      ],
-    );
-  }
-
-  // --- جديد: ودجت رسالة التحذير ---
-  Widget _buildLimitWarning() {
-    if (!_isLimitReached) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 16.0),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.red.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.red.shade200),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'User limit reached. All fields are disabled.',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- جديد: ودجت البطاقة الصغيرة لعرض المعلومات ---
-  Widget _miniInfoCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    Color? valueColor,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 22, color: Theme.of(context).primaryColor),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.black54)),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: valueColor ?? Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- جديد: ودجت اختيار العميل ---
   Widget buildClientSelection() {
+    final isEnabled = _isSuperAdmin;
     if (_isSuperAdmin) {
-      return BlocBuilder<ClientCubit, ClientState>(
+      return BlocConsumer<ClientCubit, ClientState>(
+        listener: (context, state) {
+          if (state is ClientsLoaded &&
+              _selectedClient == null &&
+              state.clients.isNotEmpty) {
+            setState(() {
+              _selectedClient = state.clients.first;
+              _updateClientLimits(_selectedClient);
+            });
+          }
+        },
         builder: (context, state) {
           if (state is ClientLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is ClientsLoaded) {
-            // اختيار أول عميل تلقائيا إذا لم يتم اختيار أي عميل بعد
-            if (_selectedClient == null && state.clients.isNotEmpty) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) {
-                  setState(() => _selectedClient = state.clients.first);
-                  _updateClientLimits(_selectedClient);
-                }
-              });
-            }
-            return buildClientDropdown(state.clients, _selectedClient);
+            return buildClientDropdown(state.clients, _selectedClient,
+                isEnabled: isEnabled);
           }
-          return Container(); // في حالة الخطأ أو عدم وجود عملاء
+          if (state is ClientError) {
+            return const Text('Error loading clients');
+          }
+          return Container();
         },
       );
     } else {
-      // للمستخدم العادي، يتم عرض العميل الخاص به فقط
       if (_selectedClient != null) {
         return buildClientDropdown([_selectedClient!], _selectedClient,
-            isEnabled: false); // غير قابل للتغيير
+            isEnabled: false);
       }
       return Container();
     }
   }
 
-  // --- جديد: ودجت القائمة المنسدلة للعملاء ---
   Widget buildClientDropdown(List<ClientEntity> clients, ClientEntity? initial,
-      {bool isEnabled = true}) {
+      {required bool isEnabled}) {
+    print(
+        'Dropdown built with ${clients.length} clients, selected: ${initial?.name}, enabled: $isEnabled');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -402,35 +293,43 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<ClientEntity>(
-          value: initial,
-          decoration: InputDecoration(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            border: const OutlineInputBorder(),
-            hintText: 'Choose a client',
-            filled: !isEnabled,
-            fillColor: Colors.grey.shade200,
+        AbsorbPointer(
+          absorbing: !isEnabled,
+          child: Opacity(
+            opacity: isEnabled ? 1.0 : 0.5,
+            child: DropdownButtonFormField<ClientEntity>(
+              value: initial,
+              decoration: InputDecoration(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: const OutlineInputBorder(),
+                hintText: 'Choose a client',
+                filled: !isEnabled,
+                fillColor: isEnabled ? null : Colors.grey.shade200,
+              ),
+              items: clients
+                  .map((client) => DropdownMenuItem<ClientEntity>(
+                        value: client,
+                        child: Text(client.name),
+                      ))
+                  .toList(),
+              onChanged: isEnabled
+                  ? (ClientEntity? newValue) {
+                      setState(() => _selectedClient = newValue);
+                      _updateClientLimits(newValue);
+                      print('Client changed to: ${newValue?.name}');
+                    }
+                  : null,
+              validator: isEnabled
+                  ? (value) => value == null ? 'Please select a client' : null
+                  : null,
+            ),
           ),
-          items: clients
-              .map((client) => DropdownMenuItem<ClientEntity>(
-                    value: client,
-                    child: Text(client.name),
-                  ))
-              .toList(),
-          onChanged: isEnabled
-              ? (ClientEntity? newValue) {
-                  setState(() => _selectedClient = newValue);
-                  _updateClientLimits(newValue); // تحديث الحدود عند التغيير
-                }
-              : null,
-          validator: (value) => value == null ? 'Please select a client' : null,
         ),
       ],
     );
   }
 
-  // --- معدّل: ودجت حقول المستخدم مع إضافة خاصية التعطيل ---
   Widget _buildUserFields({required bool isDisabled}) {
     return AbsorbPointer(
       absorbing: isDisabled,
@@ -491,21 +390,15 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
                 prefixIcon: Icon(Icons.security),
                 border: OutlineInputBorder(),
               ),
-              items: const [
-                DropdownMenuItem<UserRole?>(
-                  value: UserRole.cad,
-                  child: Text('مدير فرع'),
-                ),
-                DropdownMenuItem<UserRole?>(
-                  value: UserRole.employee,
-                  child: Text('موظف'),
-                ),
-              ],
+              items: _roles
+                  .map((role) => DropdownMenuItem<UserRole>(
+                        value: role,
+                        child: Text(_getRoleDisplay(role)),
+                      ))
+                  .toList(),
               onChanged: (UserRole? newValue) {
                 if (newValue != null) {
-                  setState(() {
-                    _selectedRole = newValue;
-                  });
+                  setState(() => _selectedRole = newValue);
                 }
               },
             ),
@@ -515,7 +408,17 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
     );
   }
 
-  // --- جديد: ودجت أزرار الإجراءات (إنشاء وإلغاء) ---
+  String _getRoleDisplay(UserRole role) {
+    switch (role) {
+      case UserRole.superAdmin:
+        return 'مدير عام';
+      case UserRole.cad:
+        return 'مدير فرع';
+      case UserRole.employee:
+        return 'موظف';
+    }
+  }
+
   Widget buildActionButtons(
       BuildContext context, bool isLoading, bool isDisabled) {
     return Row(
@@ -531,7 +434,7 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
         const SizedBox(width: 16),
         CustomButton(
           text: 'Create User',
-          onPressed: isLoading || isDisabled ? null : _onCreatePressed,
+          onPressed: isLoading || isDisabled ? null : _onSavePressed,
           isLoading: isLoading,
           icon: Icons.add,
         ),
@@ -539,17 +442,15 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
     );
   }
 
-  // --- جديد: منطق الضغط على زر الإنشاء ---
-  void _onCreatePressed() {
+  void _onSavePressed() {
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) return;
 
-    // التأكد من اختيار عميل (خاص بالسوبر أدمن)
     if (_isSuperAdmin && _selectedClient == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a client before creating a user.'),
+          content: Text('Please select a client before saving.'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -557,18 +458,114 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
     }
 
     final user = app_user.UserEntity(
-      id: '', // سيتم إنشاؤه في الباك-إند
+      id: '',
       tenantId: _selectedClient!.id,
       name: _nameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       phone: _phoneCtrl.text.trim(),
       role: _selectedRole,
-      password: _passwordCtrl.text, // تمرير كلمة المرور
-      isActive: true, // افتراضي
+      password: _passwordCtrl.text,
+      isActive: true,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
 
     _userCubit.createUser(user);
+  }
+
+  Widget _buildClientLimitsStrip() {
+    final allowed = _selectedClient?.allowedUsers;
+    final current = _selectedClient?.currentUsers;
+    final remaining =
+        (allowed != null && current != null) ? (allowed - current) : null;
+
+    return Row(
+      children: [
+        _miniInfoCard(
+            title: 'Allowed users',
+            value: allowed?.toString() ?? '--',
+            icon: Icons.verified_user),
+        const SizedBox(width: 12),
+        _miniInfoCard(
+          title: 'Remaining',
+          value: remaining?.toString() ?? '--',
+          icon: Icons.person_add_alt_1,
+          valueColor:
+              (remaining != null && remaining <= 0) ? Colors.red : Colors.green,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLimitWarning() {
+    if (!_isLimitReached) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red.shade200),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'User limit reached. All fields are disabled.',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _miniInfoCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    Color? valueColor,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: Theme.of(context).primaryColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black54)),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: valueColor ?? Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -19,6 +19,13 @@ class BranchLoaded extends BranchState {
   List<Object?> get props => [branches];
 }
 
+class BranchUpdated extends BranchState {
+  final BranchEntity branch;
+  const BranchUpdated({required this.branch});
+  @override
+  List<Object> get props => [branch];
+}
+
 class BranchCreated extends BranchState {
   final BranchEntity branch;
   const BranchCreated({required this.branch});
@@ -34,3 +41,6 @@ class BranchError extends BranchState {
   @override
   List<Object?> get props => [message];
 }
+
+/// حالة اختيارية: لو حابب توضح إن مفيش أي فروع
+class BranchEmpty extends BranchState {}

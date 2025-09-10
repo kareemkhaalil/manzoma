@@ -72,4 +72,3 @@ class ClientError extends ClientState {
   @override
   List<Object> get props => [message];
 }
-

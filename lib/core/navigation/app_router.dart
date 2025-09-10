@@ -5,6 +5,9 @@ import 'package:manzoma/core/enums/user_role.dart';
 import 'package:manzoma/core/localization/app_localizations.dart';
 import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
 import 'package:manzoma/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/features/branches/domain/entities/branch_entity.dart';
+import 'package:manzoma/features/branches/presentation/screens/branches_edit_screen.dart';
+import 'package:manzoma/features/users/presentation/screens/users_edit_screen.dart';
 import 'package:manzoma/shared/widgets/app_sidebar.dart';
 import 'package:manzoma/shared/widgets/app_topbar.dart';
 import 'package:manzoma/shared/widgets/splash_screen.dart';
@@ -112,6 +115,13 @@ class AppRouter {
           child: UsersCreateScreen(),
         ),
       ),
+      GoRoute(
+        path: '/users/edit',
+        builder: (context, state) {
+          final widget = state.extra as UsersEditScreen;
+          return widget;
+        },
+      ),
 
       // Branches Routes (Super Admin & CAD only)
       GoRoute(
@@ -125,6 +135,14 @@ class AppRouter {
         name: 'createBranch',
         builder: (context, state) =>
             const MainAppShell(child: BranchesCreateScreen()),
+      ),
+      GoRoute(
+        path: '/branches/edit',
+        builder: (context, state) {
+          // استلام بيانات الفرع
+          final branch = state.extra as BranchEntity;
+          return BranchesEditScreen(editingBranch: branch);
+        },
       ),
 
       // Reports Routes

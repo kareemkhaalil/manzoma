@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:manzoma/core/entities/user_entity.dart';
 import 'package:manzoma/core/enums/user_role.dart';
+import 'package:manzoma/features/clients/domain/entities/client_entity.dart';
+import 'package:manzoma/features/clients/presentation/cubit/client_cubit.dart';
+import 'package:manzoma/features/clients/presentation/cubit/client_state.dart';
+import 'package:manzoma/features/users/presentation/screens/users_create_screen.dart';
+import 'package:manzoma/features/users/presentation/screens/users_edit_screen.dart';
 import '../cubit/user_cubit.dart';
 export 'package:manzoma/core/entities/user_entity.dart';
 import '../widgets/add_user_dialog.dart';
@@ -17,13 +23,15 @@ class UsersScreen extends StatefulWidget {
 
 class _UsersScreenState extends State<UsersScreen> {
   UserRole? selectedRole;
+  String? selectedClientId; // ✅ للفلترة بالعميل
   String searchQuery = '';
+  List<ClientEntity> clients = [];
 
   @override
   void initState() {
     super.initState();
-    // Load users when screen initializes
-    context.read<UserCubit>().getUsers();
+    // نجيب العملاء أولاً
+    context.read<ClientCubit>().getClients();
   }
 
   @override
@@ -50,181 +58,252 @@ class _UsersScreenState extends State<UsersScreen> {
           SizedBox(width: 16.w),
         ],
       ),
-      body: Column(
-        children: [
-          // Search and Filter Section
-          Container(
-            padding: EdgeInsets.all(16.w),
-            color: Colors.white,
-            child: Column(
-              children: [
-                // Search Bar
-                TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      searchQuery = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'البحث عن مستخدم...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                // Role Filter
-                Row(
-                  children: [
-                    Text(
-                      'تصفية حسب الدور:',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                        child: DropdownButtonFormField<UserRole?>(
-                      value: selectedRole,
-                      hint: const Text('جميع الأدوار'),
-                      items: const [
-                        DropdownMenuItem<UserRole?>(
-                          value: null,
-                          child: Text('جميع الأدوار'),
-                        ),
-                        DropdownMenuItem<UserRole?>(
-                          value: UserRole.superAdmin,
-                          child: Text('مدير عام'),
-                        ),
-                        DropdownMenuItem<UserRole?>(
-                          value: UserRole.cad,
-                          child: Text('مدير فرع'),
-                        ),
-                        DropdownMenuItem<UserRole?>(
-                          value: UserRole.employee,
-                          child: Text('موظف'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          selectedRole = value;
-                        });
-                        context.read<UserCubit>().getUsers(role: value);
-                      },
-                    )),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Users List
-          Expanded(
-            child: BlocBuilder<UserCubit, UserState>(
-              builder: (context, state) {
-                if (state is UserLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else if (state is UserError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64.w,
-                          color: Colors.red,
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          'حدث خطأ: ${state.message}',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            color: Colors.red,
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<UserCubit>().getUsers();
-                          },
-                          child: const Text('إعادة المحاولة'),
-                        ),
-                      ],
-                    ),
-                  );
-                } else if (state is UserLoaded) {
-                  final filteredUsers = state.users.where((user) {
-                    final matchesSearch = searchQuery.isEmpty ||
-                        user.name
-                                ?.toLowerCase()
-                                .contains(searchQuery.toLowerCase()) ==
-                            true ||
-                        user.email
-                                ?.toLowerCase()
-                                .contains(searchQuery.toLowerCase()) ==
-                            true;
-                    return matchesSearch;
-                  }).toList();
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<ClientCubit, ClientState>(
+            listener: (context, state) {
+              if (state is ClientsLoaded) {
+                setState(() {
+                  clients = state.clients;
+                });
 
-                  if (filteredUsers.isEmpty) {
+                // 👈 أول ما العملاء يتحملوا نجيب المستخدمين
+                context.read<UserCubit>().getUsers(
+                      role: selectedRole,
+                      tenantId: selectedClientId,
+                    );
+              }
+            },
+          ),
+        ],
+        child: Column(
+          children: [
+            // Search and Filter Section
+            Container(
+              padding: EdgeInsets.all(16.w),
+              color: Colors.white,
+              child: Column(
+                children: [
+                  // Clients Dropdown
+                  DropdownButtonFormField<String?>(
+                    value: selectedClientId,
+                    hint: const Text('الرجاء اختيار عميل'),
+                    isExpanded: true,
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('جميع العملاء'),
+                      ),
+                      ...clients.map(
+                        (client) => DropdownMenuItem<String?>(
+                          value: client.id,
+                          child: Text(client.name),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedClientId = value;
+                      });
+                      context.read<UserCubit>().getUsers(
+                            role: selectedRole,
+                            tenantId: value,
+                          );
+                    },
+                  ),
+                  SizedBox(height: 12.h),
+                  // Search Bar
+                  TextField(
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'البحث عن مستخدم...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  // Role Filter
+                  Row(
+                    children: [
+                      Text(
+                        'تصفية حسب الدور:',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: DropdownButtonFormField<UserRole?>(
+                          value: selectedRole,
+                          hint: const Text('جميع الأدوار'),
+                          items: const [
+                            DropdownMenuItem<UserRole?>(
+                              value: null,
+                              child: Text('جميع الأدوار'),
+                            ),
+                            DropdownMenuItem<UserRole?>(
+                              value: UserRole.superAdmin,
+                              child: Text('مدير عام'),
+                            ),
+                            DropdownMenuItem<UserRole?>(
+                              value: UserRole.cad,
+                              child: Text('مدير فرع'),
+                            ),
+                            DropdownMenuItem<UserRole?>(
+                              value: UserRole.employee,
+                              child: Text('موظف'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              selectedRole = value;
+                            });
+                            context.read<UserCubit>().getUsers(
+                                  role: value,
+                                  tenantId: selectedClientId,
+                                );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Users List
+            Expanded(
+              child: BlocBuilder<UserCubit, UserState>(
+                builder: (context, state) {
+                  if (state is UserLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  } else if (state is UserError) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.people_outline,
+                            Icons.error_outline,
                             size: 64.w,
-                            color: Colors.grey,
+                            color: Colors.red,
                           ),
                           SizedBox(height: 16.h),
                           Text(
-                            'لا توجد مستخدمين',
+                            'حدث خطأ: ${state.message}',
                             style: TextStyle(
-                              fontSize: 18.sp,
-                              color: Colors.grey[600],
+                              fontSize: 16.sp,
+                              color: Colors.red,
                             ),
                           ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            'اضغط على + لإضافة مستخدم جديد',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.grey[500],
-                            ),
+                          SizedBox(height: 16.h),
+                          ElevatedButton(
+                            onPressed: () {
+                              context.read<UserCubit>().getUsers(
+                                    role: selectedRole,
+                                    tenantId: selectedClientId,
+                                  );
+                            },
+                            child: const Text('إعادة المحاولة'),
                           ),
                         ],
                       ),
                     );
-                  }
+                  } else if (state is UserLoaded) {
+                    final filteredUsers = state.users.where((user) {
+                      final matchesSearch = searchQuery.isEmpty ||
+                          user.name
+                                  ?.toLowerCase()
+                                  .contains(searchQuery.toLowerCase()) ==
+                              true ||
+                          user.email
+                                  ?.toLowerCase()
+                                  .contains(searchQuery.toLowerCase()) ==
+                              true;
+                      return matchesSearch;
+                    }).toList();
 
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      context.read<UserCubit>().getUsers(role: selectedRole);
-                    },
-                    child: ListView.builder(
-                      padding: EdgeInsets.all(16.w),
-                      itemCount: filteredUsers.length,
-                      itemBuilder: (context, index) {
-                        return UserCard(
-                          user: filteredUsers[index],
-                          onTap: () =>
-                              _showUserDetails(context, filteredUsers[index]),
-                        );
+                    if (filteredUsers.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: 64.w,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 16.h),
+                            Text(
+                              'لا توجد مستخدمين',
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              'اضغط على + لإضافة مستخدم جديد',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        context.read<UserCubit>().getUsers(
+                              role: selectedRole,
+                              tenantId: selectedClientId,
+                            );
                       },
-                    ),
-                  );
-                }
-                return const SizedBox();
-              },
+                      child: ListView.builder(
+                        padding: EdgeInsets.all(16.w),
+                        itemCount: filteredUsers.length,
+                        itemBuilder: (context, index) {
+                          return UserCard(
+                            user: filteredUsers[index],
+                            onTap: () => _showUserDetails(
+                              context,
+                              filteredUsers[index],
+                            ),
+                            onEdit: () {
+                              // يفتح شاشة التعديل
+                              context.go(
+                                '/users/edit', // 👈 MODIFIED: غيّر المسار إلى صفحة التعديل
+                                extra: UsersEditScreen(
+                                  editingUser: filteredUsers[index],
+                                ),
+                              );
+                            },
+                            onDelete: () {
+                              // يحذف المستخدم
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  }
+                  return const SizedBox();
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

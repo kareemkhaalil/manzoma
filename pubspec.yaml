@@ -26,6 +26,7 @@ dependencies:
   video_player: ^2.10.0
   gif_view: ^1.0.3
   image_sequence_animator: ^2.0.0
+  timeago: ^3.7.1
 
 dev_dependencies:
   build_runner: ^2.4.7

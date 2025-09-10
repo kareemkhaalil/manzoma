@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:manzoma/core/enums/user_role.dart';
-import 'package:manzoma/features/dashboard/domain/entities/activity_entity.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:manzoma/features/dashboard/presentation/cubit/activite_cubit.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import 'package:timeago/timeago.dart' as timeago; // استيراد المكتبة
+
+import '../../domain/entities/activity_entity.dart';
 
 class RecentActivities extends StatelessWidget {
   final UserRole userRole;
@@ -124,19 +125,3 @@ class RecentActivities extends StatelessWidget {
 }
 
 // لم نعد بحاجة لكلاس ActivityData القديم
-
-class ActivityData {
-  final String title;
-  final String description;
-  final String time;
-  final IconData icon;
-  final Color color;
-
-  ActivityData({
-    required this.title,
-    required this.description,
-    required this.time,
-    required this.icon,
-    required this.color,
-  });
-}

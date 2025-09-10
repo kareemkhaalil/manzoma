@@ -7,11 +7,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class UserCard extends StatelessWidget {
   final UserEntity user;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit; // 👈 أضف callback للتعديل
+  final VoidCallback? onDelete; // 👈 أضف callback للحذف (اختياري)
 
   const UserCard({
     super.key,
     required this.user,
     this.onTap,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -54,7 +58,7 @@ class UserCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user.displayName,
+                      user.displayName ?? user.name ?? 'غير محدد',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
@@ -123,7 +127,7 @@ class UserCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${user.baseSalary.toStringAsFixed(0)} ج.م',
+                    '${(user.baseSalary ?? 0).toStringAsFixed(0)} ج.م',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
@@ -141,10 +145,43 @@ class UserCard extends StatelessWidget {
                 ],
               ),
               SizedBox(width: 8.w),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16.w,
-                color: Colors.grey[400],
+              // 👈 استبدل الأيقونة بـ PopupMenuButton
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit' && onEdit != null) {
+                    onEdit!();
+                  } else if (value == 'delete' && onDelete != null) {
+                    onDelete!();
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, color: Colors.blue),
+                        SizedBox(width: 8),
+                        Text('تعديل'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('حذف'),
+                      ],
+                    ),
+                  ),
+                ],
+                icon: Icon(
+                  Icons.more_vert,
+                  size: 20.w,
+                  color: Colors.grey[600],
+                ),
+                tooltip: 'خيارات المستخدم',
               ),
             ],
           ),
