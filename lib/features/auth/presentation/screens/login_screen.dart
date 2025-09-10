@@ -16,7 +16,17 @@ class LoginScreen extends StatelessWidget {
       child: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            context.go('/dashboard');
+            final role =
+                state.user.role; // اتأكد إن عندك user فيه role جاي من backend
+
+            if (role == 'employee') {
+              context.go('/employee/home');
+            } else if (role == 'cad') {
+              context.go('/dashboard');
+            } else {
+              // fallback لو الـ role مش معروف
+              context.go('/dashboard');
+            }
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

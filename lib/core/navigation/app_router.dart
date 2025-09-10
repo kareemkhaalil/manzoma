@@ -7,6 +7,8 @@ import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
 import 'package:manzoma/core/storage/shared_pref_helper.dart';
 import 'package:manzoma/features/branches/domain/entities/branch_entity.dart';
 import 'package:manzoma/features/branches/presentation/screens/branches_edit_screen.dart';
+import 'package:manzoma/features/employee/presentation/screens/attendance_screen.dart';
+import 'package:manzoma/features/employee/presentation/screens/employee_home_screen.dart';
 import 'package:manzoma/features/users/presentation/screens/users_edit_screen.dart';
 import 'package:manzoma/shared/widgets/app_sidebar.dart';
 import 'package:manzoma/shared/widgets/app_topbar.dart';
@@ -150,6 +152,16 @@ class AppRouter {
         path: RouteNames.reports,
         name: 'reports',
         builder: (context, state) => const MainAppShell(child: ReportsScreen()),
+      ),
+
+      GoRoute(
+        path: "/employee/home",
+        builder: (context, state) => const EmployeeHomeScreen(),
+      ),
+      GoRoute(
+        path: "/employee/attendance",
+        builder: (context, state) =>
+            const AttendanceEmployeeScreen(), // هنضيفها كمان
       ),
     ],
   );
