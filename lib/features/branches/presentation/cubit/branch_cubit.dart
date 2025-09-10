@@ -16,18 +16,20 @@ class BranchCubit extends Cubit<BranchState> {
   }) : super(BranchInitial());
 
   Future<void> getBranches({
-    String? tenantId,
+    String? clientId, // 👈 دعم فلترة العميل
     int? limit,
     int? offset,
   }) async {
     emit(BranchLoading());
-    
-    final result = await getBranchesUseCase(GetBranchesParams(
-      tenantId: tenantId,
-      limit: limit,
-      offset: offset,
-    ));
-    
+
+    final result = await getBranchesUseCase(
+      GetBranchesParams(
+        tenantId: clientId, // 👈 نربطه بالـ tenantId اللي موجود في الـ usecase
+        limit: limit,
+        offset: offset,
+      ),
+    );
+
     result.fold(
       (failure) => emit(BranchError(message: failure.message)),
       (branches) => emit(BranchLoaded(branches: branches)),
@@ -36,25 +38,35 @@ class BranchCubit extends Cubit<BranchState> {
 
   Future<void> createBranch(BranchEntity branch) async {
     emit(BranchLoading());
-    
-    final result = await createBranchUseCase(CreateBranchParams(branch: branch));
-    
+
+    final result =
+        await createBranchUseCase(CreateBranchParams(branch: branch));
+
     result.fold(
       (failure) => emit(BranchError(message: failure.message)),
       (createdBranch) {
-        // Refresh the branches list after creating a new branch
-        if (state is BranchLoaded) {
-          final currentBranches = (state as BranchLoaded).branches;
-          emit(BranchLoaded(branches: [...currentBranches, createdBranch]));
-        } else {
-          emit(BranchLoaded(branches: [createdBranch]));
-        }
+        emit(BranchCreated(branch: createdBranch));
+
+        // لو حابب تعمل refresh بعد الإنشاء مباشرة
+        // getBranches(clientId: createdBranch.tenantId);
       },
     );
+  }
+
+  // افترض وجود UpdateBranchUseCase
+  Future<void> updateBranch(BranchEntity branch) async {
+    emit(BranchLoading());
+    // final result = await updateBranchUseCase(branch);
+    // result.fold(
+    //   (failure) => emit(BranchError(message: failure.message)),
+    //   (updatedBranch) {
+    //     emit(BranchUpdated(branch: updatedBranch));
+    //     getBranches(); // لإعادة تحميل القائمة
+    //   },
+    // );
   }
 
   void resetState() {
     emit(BranchInitial());
   }
 }
-

@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:huma_plus/core/storage/shared_pref_helper.dart';
-import 'package:huma_plus/features/auth/data/models/user_model.dart';
+import 'package:manzoma/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/features/auth/data/models/user_model.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/usecases/sign_in_usecase.dart';

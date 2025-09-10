@@ -48,13 +48,13 @@ class AppStateWrapper extends StatelessWidget {
           message: loadingMessage,
           showLogo: showLoadingLogo,
         );
-      
+
       case AppState.error:
         return AppErrorWidget(
           message: errorMessage ?? 'حدث خطأ غير متوقع',
           onRetry: onRetry,
         );
-      
+
       case AppState.empty:
         return EmptyStateWidget(
           title: emptyTitle,
@@ -63,7 +63,7 @@ class AppStateWrapper extends StatelessWidget {
           onAction: onEmptyAction,
           actionText: emptyActionText,
         );
-      
+
       case AppState.success:
       case AppState.initial:
       default:
@@ -179,22 +179,21 @@ class AppStateBuilder extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (state) {
       case AppState.loading:
-        return loadingBuilder?.call() ?? 
-               LoadingWidget(message: loadingMessage);
-      
+        return loadingBuilder?.call() ?? LoadingWidget(message: loadingMessage);
+
       case AppState.error:
-        return errorBuilder?.call(errorMessage ?? 'حدث خطأ غير متوقع') ?? 
-               AppErrorWidget(
-                 message: errorMessage ?? 'حدث خطأ غير متوقع',
-                 onRetry: onRetry,
-               );
-      
+        return errorBuilder?.call(errorMessage ?? 'حدث خطأ غير متوقع') ??
+            AppErrorWidget(
+              message: errorMessage ?? 'حدث خطأ غير متوقع',
+              onRetry: onRetry,
+            );
+
       case AppState.empty:
-        return emptyBuilder?.call() ?? 
-               const EmptyStateWidget(
-                 message: 'لا توجد بيانات للعرض',
-               );
-      
+        return emptyBuilder?.call() ??
+            const EmptyStateWidget(
+              message: 'لا توجد بيانات للعرض',
+            );
+
       case AppState.success:
       case AppState.initial:
       default:
@@ -207,22 +206,21 @@ class AppStateBuilder extends StatelessWidget {
 extension BlocStateExtension on Object {
   AppState toAppState() {
     final stateType = runtimeType.toString();
-    
+
     if (stateType.contains('Loading')) {
       return AppState.loading;
     } else if (stateType.contains('Error')) {
       return AppState.error;
     } else if (stateType.contains('Empty')) {
       return AppState.empty;
-    } else if (stateType.contains('Loaded') || 
-               stateType.contains('Success') ||
-               stateType.contains('Created') ||
-               stateType.contains('Updated') ||
-               stateType.contains('Deleted')) {
+    } else if (stateType.contains('Loaded') ||
+        stateType.contains('Success') ||
+        stateType.contains('Created') ||
+        stateType.contains('Updated') ||
+        stateType.contains('Deleted')) {
       return AppState.success;
     } else {
       return AppState.initial;
     }
   }
 }
-
