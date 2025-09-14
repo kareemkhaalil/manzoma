@@ -5,11 +5,13 @@ import '../../domain/entities/branch_entity.dart';
 class BranchCard extends StatelessWidget {
   final BranchEntity branch;
   final VoidCallback? onTap;
+  final Widget? trailing; // <--- إضافة هذا السطر
 
   const BranchCard({
     super.key,
     required this.branch,
     this.onTap,
+    this.trailing, // <--- إضافة هذا السطر
   });
 
   @override
@@ -120,6 +122,15 @@ class BranchCard extends StatelessWidget {
                 size: 16.w,
                 color: Colors.grey[400],
               ),
+              if (trailing != null)
+                trailing!
+              else
+                Icon(
+                  // fallback
+                  Icons.arrow_forward_ios,
+                  size: 16.w,
+                  color: Colors.grey[400],
+                ),
             ],
           ),
         ),
@@ -127,4 +138,3 @@ class BranchCard extends StatelessWidget {
     );
   }
 }
-

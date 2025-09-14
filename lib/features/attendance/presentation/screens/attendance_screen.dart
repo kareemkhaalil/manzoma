@@ -11,7 +11,8 @@ class AttendanceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AttendanceCubit()..getAttendanceHistory(userId: 'current-user-id', refresh: true),
+      create: (context) => AttendanceCubit()
+        ..getAttendanceHistory(userId: 'current-user-id', refresh: true),
       child: const AttendanceView(),
     );
   }
@@ -42,9 +43,9 @@ class _AttendanceViewState extends State<AttendanceView> {
   void _onScroll() {
     if (_isBottom) {
       context.read<AttendanceCubit>().getAttendanceHistory(
-        userId: 'current-user-id',
-        refresh: false,
-      );
+            userId: 'current-user-id',
+            refresh: false,
+          );
     }
   }
 
@@ -164,10 +165,10 @@ class _AttendanceViewState extends State<AttendanceView> {
                             isLoading: state is AttendanceLoading,
                             onPressed: () {
                               context.read<AttendanceCubit>().checkIn(
-                                userId: 'current-user-id',
-                                location: 'Office',
-                                notes: 'Regular check-in',
-                              );
+                                    userId: 'current-user-id',
+                                    location: 'Office',
+                                    notes: 'Regular check-in',
+                                  );
                             },
                             backgroundColor: Colors.green,
                           ),
@@ -177,9 +178,9 @@ class _AttendanceViewState extends State<AttendanceView> {
                             isLoading: state is AttendanceLoading,
                             onPressed: () {
                               context.read<AttendanceCubit>().checkOut(
-                                attendanceId: 'attendance-id',
-                                notes: 'Regular check-out',
-                              );
+                                    attendanceId: 'attendance-id',
+                                    notes: 'Regular check-out',
+                                  );
                             },
                             backgroundColor: Colors.orange,
                           ),
@@ -210,7 +211,8 @@ class _AttendanceViewState extends State<AttendanceView> {
                   } else if (state is AttendanceHistoryLoaded) {
                     return ListView.builder(
                       controller: _scrollController,
-                      itemCount: state.attendanceList.length + (state.hasReachedMax ? 0 : 1),
+                      itemCount: state.attendanceList.length +
+                          (state.hasReachedMax ? 0 : 1),
                       itemBuilder: (context, index) {
                         if (index >= state.attendanceList.length) {
                           return const Center(
@@ -226,31 +228,39 @@ class _AttendanceViewState extends State<AttendanceView> {
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: _getStatusColor(attendance.status),
+                              backgroundColor:
+                                  _getStatusColor(attendance.status),
                               child: Icon(
                                 _getStatusIcon(attendance.status),
                                 color: Colors.white,
                               ),
                             ),
                             title: Text(
-                              DateFormat('EEEE, MMM dd, yyyy').format(attendance.date),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              DateFormat('EEEE, MMM dd, yyyy')
+                                  .format(attendance.date),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (attendance.checkInTime != null)
-                                  Text('Check In: ${DateFormat('HH:mm').format(attendance.checkInTime!)}'),
+                                  Text(
+                                      'Check In: ${DateFormat('HH:mm').format(attendance.checkInTime!)}'),
                                 if (attendance.checkOutTime != null)
-                                  Text('Check Out: ${DateFormat('HH:mm').format(attendance.checkOutTime!)}'),
+                                  Text(
+                                      'Check Out: ${DateFormat('HH:mm').format(attendance.checkOutTime!)}'),
                                 if (attendance.workingHours != null)
-                                  Text('Working Hours: ${attendance.workingHours}h'),
+                                  Text(
+                                      'Working Hours: ${attendance.workingHours}h'),
                               ],
                             ),
                             trailing: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: _getStatusColor(attendance.status).withOpacity(0.1),
+                                color: _getStatusColor(attendance.status)
+                                    .withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -277,10 +287,12 @@ class _AttendanceViewState extends State<AttendanceView> {
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: () {
-                              context.read<AttendanceCubit>().getAttendanceHistory(
-                                userId: 'current-user-id',
-                                refresh: true,
-                              );
+                              context
+                                  .read<AttendanceCubit>()
+                                  .getAttendanceHistory(
+                                    userId: 'current-user-id',
+                                    refresh: true,
+                                  );
                             },
                             child: const Text('Retry'),
                           ),
@@ -328,4 +340,3 @@ class _AttendanceViewState extends State<AttendanceView> {
     }
   }
 }
-

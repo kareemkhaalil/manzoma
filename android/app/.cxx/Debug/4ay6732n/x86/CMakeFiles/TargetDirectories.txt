@@ -1,0 +1,2 @@
+F:/Flutter Project/manzoma/attendanceSystem/android/app/.cxx/Debug/4ay6732n/x86/CMakeFiles/edit_cache.dir
+F:/Flutter Project/manzoma/attendanceSystem/android/app/.cxx/Debug/4ay6732n/x86/CMakeFiles/rebuild_cache.dir

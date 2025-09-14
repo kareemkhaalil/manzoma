@@ -14,6 +14,7 @@ import 'package:manzoma/features/clients/domain/usecases/get_clients_usecase.dar
 import 'package:manzoma/features/clients/domain/usecases/update_client_usecase.dart';
 import 'package:manzoma/features/clients/presentation/cubit/client_cubit.dart';
 import 'package:manzoma/features/payroll/presentation/cubit/payroll_cubit.dart';
+import 'package:manzoma/features/users/domain/usecases/update_users_usecase.dart';
 import 'package:manzoma/features/users/presentation/cubit/user_cubit.dart';
 import 'package:manzoma/features/branches/presentation/cubit/branch_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -85,6 +86,7 @@ Future<void> init() async {
   sl.registerFactory<UserCubit>(() => UserCubit(
         getUsersUseCase: sl(),
         createUserUseCase: sl(),
+        updateUsersUsecase: sl(),
       ));
 
   sl.registerFactory<BranchCubit>(() => BranchCubit(
@@ -137,7 +139,7 @@ Future<void> init() async {
   //! Users
   sl.registerLazySingleton<GetUsersUseCase>(() => GetUsersUseCase(sl()));
   sl.registerLazySingleton<CreateUserUseCase>(() => CreateUserUseCase(sl()));
-
+  sl.registerLazySingleton<UpdateUsersUsecase>(() => UpdateUsersUsecase(sl()));
   sl.registerLazySingleton<UserRemoteDataSource>(
     () => UserRemoteDataSourceImpl(supabaseClient: sl()),
   );

@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:manzoma/core/di/injection_container.dart';
 import 'package:manzoma/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/features/clients/domain/usecases/get_clients_usecase.dart';
+import 'package:manzoma/features/dashboard/presentation/cubit/activite_cubit.dart';
+import 'package:manzoma/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:manzoma/features/users/domain/usecases/get_users_usecase.dart';
 import '../../../../shared/widgets/app_sidebar.dart';
 import '../../../../shared/widgets/app_topbar.dart';
 import 'package:manzoma/core/enums/user_role.dart';
@@ -18,10 +25,30 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   UserRole _userRole = UserRole.employee; // Default role
 
+  // تعريف الـ Cubits
+  late final DashboardCubit _dashboardCubit;
+  late final ActivityCubit _activityCubit;
+
   @override
   void initState() {
     super.initState();
     _loadUserRole();
+    _dashboardCubit = DashboardCubit(
+      getClientsUseCase: getIt<GetClientsUseCase>(), // <-- حقن من get_it
+      getUsersUseCase: getIt<GetUsersUseCase>(), // <-- حقن من get_it
+    ); // يمكنك حقن الـ UseCases هنا
+    _activityCubit = ActivityCubit();
+
+    // بدء جلب البيانات
+    _dashboardCubit.getStats();
+    _activityCubit.getRecentActivities();
+  }
+
+  @override
+  void dispose() {
+    _dashboardCubit.close();
+    _activityCubit.close();
+    super.dispose();
   }
 
   Future<void> _loadUserRole() async {
@@ -31,26 +58,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         _userRole = user.role;
       });
+      
+      // إذا كان المستخدم موظف، نوجهه لواجهة الموظفين
+      if (user.role == UserRole.employee) {
+        // استخدام WidgetsBinding لضمان أن التنقل يحدث بعد انتهاء البناء
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.go('/employee/home');
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          // AppSidebar(userRole: _userRole), // Handled in MainAppShell
-          Expanded(
-            child: Column(
-              children: [
-                // AppTopBar(title: 'Dashboard'), // Handled in MainAppShell
-                Expanded(
-                  child: DashboardContent(userRole: _userRole),
-                ),
-              ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _dashboardCubit),
+        BlocProvider.value(value: _activityCubit),
+      ],
+      child: Scaffold(
+        body: Row(
+          children: [
+            // AppSidebar(userRole: _userRole), // Handled in MainAppShell
+            Expanded(
+              child: Column(
+                children: [
+                  // AppTopBar(title: 'Dashboard'), // Handled in MainAppShell
+                  Expanded(
+                    child: DashboardContent(userRole: _userRole),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

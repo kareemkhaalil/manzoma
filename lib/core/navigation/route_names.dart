@@ -16,7 +16,8 @@ class RouteNames {
   // Payroll Routes
   static const String payroll = '/payroll';
   static const String payrollHistory = '/payroll/history';
-  static const String payrollSettings = '/payroll/settings';
+  static const String payrollSettings = '/payroll/rules/settings';
+  static const String employeeSalary = '/payroll/employee/salary';
 
   // Branches Routes (Super Admin & CAD only)
   static const String branches = '/branches';

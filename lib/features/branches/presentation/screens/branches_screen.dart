@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:manzoma/features/clients/presentation/cubit/client_state.dart';
 import '../cubit/branch_cubit.dart';
 import '../../domain/entities/branch_entity.dart';
-import '../widgets/add_branch_dialog.dart';
 import '../widgets/branch_card.dart';
+import '../../../clients/presentation/cubit/client_cubit.dart';
 
 class BranchesScreen extends StatefulWidget {
   const BranchesScreen({super.key});
@@ -16,12 +17,21 @@ class BranchesScreen extends StatefulWidget {
 
 class _BranchesScreenState extends State<BranchesScreen> {
   String searchQuery = '';
+  String? selectedClientId;
 
   @override
   void initState() {
     super.initState();
-    // Load branches when screen initializes
+    // تحميل الفروع والعملاء
     context.read<BranchCubit>().getBranches();
+    context.read<ClientCubit>().getClients();
+  }
+
+  void _onClientChanged(String? clientId) {
+    setState(() {
+      selectedClientId = clientId;
+    });
+    context.read<BranchCubit>().getBranches(clientId: clientId);
   }
 
   @override
@@ -50,7 +60,49 @@ class _BranchesScreenState extends State<BranchesScreen> {
       ),
       body: Column(
         children: [
-          // Search Section
+          // اختيار العميل
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+            child: BlocBuilder<ClientCubit, ClientState>(
+              builder: (context, state) {
+                if (state is ClientLoading) {
+                  return const LinearProgressIndicator();
+                } else if (state is ClientsLoaded) {
+                  return DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: "اختر العميل",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 8.h,
+                      ),
+                    ),
+                    value: selectedClientId,
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text("بالرجاء اختيار عميل"),
+                      ),
+                      ...state.clients.map(
+                        (client) => DropdownMenuItem<String>(
+                          value: client.id,
+                          child: Text(client.name),
+                        ),
+                      ),
+                    ],
+                    onChanged: _onClientChanged,
+                  );
+                } else if (state is ClientError) {
+                  return Text("خطأ في تحميل العملاء: ${state.message}");
+                }
+                return const SizedBox();
+              },
+            ),
+          ),
+
+          // مربع البحث
           Container(
             padding: EdgeInsets.all(16.w),
             color: Colors.white,
@@ -72,24 +124,20 @@ class _BranchesScreenState extends State<BranchesScreen> {
               ),
             ),
           ),
-          // Branches List
+
+          // عرض الفروع
           Expanded(
             child: BlocBuilder<BranchCubit, BranchState>(
               builder: (context, state) {
                 if (state is BranchLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 } else if (state is BranchError) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64.w,
-                          color: Colors.red,
-                        ),
+                        Icon(Icons.error_outline,
+                            size: 64.w, color: Colors.red),
                         SizedBox(height: 16.h),
                         Text(
                           'حدث خطأ: ${state.message}',
@@ -101,7 +149,9 @@ class _BranchesScreenState extends State<BranchesScreen> {
                         SizedBox(height: 16.h),
                         ElevatedButton(
                           onPressed: () {
-                            context.read<BranchCubit>().getBranches();
+                            context
+                                .read<BranchCubit>()
+                                .getBranches(clientId: selectedClientId);
                           },
                           child: const Text('إعادة المحاولة'),
                         ),
@@ -126,11 +176,8 @@ class _BranchesScreenState extends State<BranchesScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.store_outlined,
-                            size: 64.w,
-                            color: Colors.grey,
-                          ),
+                          Icon(Icons.store_outlined,
+                              size: 64.w, color: Colors.grey),
                           SizedBox(height: 16.h),
                           Text(
                             'لا توجد فروع',
@@ -154,16 +201,49 @@ class _BranchesScreenState extends State<BranchesScreen> {
 
                   return RefreshIndicator(
                     onRefresh: () async {
-                      context.read<BranchCubit>().getBranches();
+                      context
+                          .read<BranchCubit>()
+                          .getBranches(clientId: selectedClientId);
                     },
                     child: ListView.builder(
                       padding: EdgeInsets.all(16.w),
                       itemCount: filteredBranches.length,
                       itemBuilder: (context, index) {
+                        final branch = filteredBranches[index];
+
                         return BranchCard(
-                          branch: filteredBranches[index],
-                          onTap: () => _showBranchDetails(
-                              context, filteredBranches[index]),
+                          branch: branch,
+                          onTap: () => _showBranchDetails(context, branch),
+                          // --- إضافة الـ trailing widget هنا ---
+                          trailing: PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                // --- التوجيه لصفحة التعديل مع تمرير بيانات الفرع ---
+                                context.go('/branches/edit', extra: branch);
+                              } else if (value == 'delete') {
+                                // يمكنك إضافة منطق الحذف هنا لاحقًا
+                              }
+                            },
+                            itemBuilder: (BuildContext context) =>
+                                <PopupMenuEntry<String>>[
+                              const PopupMenuItem<String>(
+                                value: 'edit',
+                                child: ListTile(
+                                  leading: Icon(Icons.edit),
+                                  title: Text('تعديل'),
+                                ),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'delete',
+                                child: ListTile(
+                                  leading:
+                                      Icon(Icons.delete, color: Colors.red),
+                                  title: Text('حذف',
+                                      style: TextStyle(color: Colors.red)),
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -177,13 +257,6 @@ class _BranchesScreenState extends State<BranchesScreen> {
       ),
     );
   }
-
-  // void _showAddBranchDialog(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) => const AddBranchDialog(),
-  //   );
-  // }
 
   void _showBranchDetails(BuildContext context, BranchEntity branch) {
     showDialog(

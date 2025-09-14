@@ -16,17 +16,19 @@ class BranchCubit extends Cubit<BranchState> {
   }) : super(BranchInitial());
 
   Future<void> getBranches({
-    String? tenantId,
+    String? clientId, // 👈 دعم فلترة العميل
     int? limit,
     int? offset,
   }) async {
     emit(BranchLoading());
 
-    final result = await getBranchesUseCase(GetBranchesParams(
-      tenantId: tenantId,
-      limit: limit,
-      offset: offset,
-    ));
+    final result = await getBranchesUseCase(
+      GetBranchesParams(
+        tenantId: clientId, // 👈 نربطه بالـ tenantId اللي موجود في الـ usecase
+        limit: limit,
+        offset: offset,
+      ),
+    );
 
     result.fold(
       (failure) => emit(BranchError(message: failure.message)),
@@ -43,12 +45,25 @@ class BranchCubit extends Cubit<BranchState> {
     result.fold(
       (failure) => emit(BranchError(message: failure.message)),
       (createdBranch) {
-        emit(BranchCreated(branch: createdBranch)); // ✅ حالة جديدة
+        emit(BranchCreated(branch: createdBranch));
 
-        // بعد كده نجيب كل الفروع تاني عشان نعمل refresh
-        // getBranches(tenantId: createdBranch.tenantId);
+        // لو حابب تعمل refresh بعد الإنشاء مباشرة
+        // getBranches(clientId: createdBranch.tenantId);
       },
     );
+  }
+
+  // افترض وجود UpdateBranchUseCase
+  Future<void> updateBranch(BranchEntity branch) async {
+    emit(BranchLoading());
+    // final result = await updateBranchUseCase(branch);
+    // result.fold(
+    //   (failure) => emit(BranchError(message: failure.message)),
+    //   (updatedBranch) {
+    //     emit(BranchUpdated(branch: updatedBranch));
+    //     getBranches(); // لإعادة تحميل القائمة
+    //   },
+    // );
   }
 
   void resetState() {
