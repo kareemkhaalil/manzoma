@@ -1,278 +1,239 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:manzoma/core/storage/shared_pref_helper.dart';
-import 'package:intl/intl.dart';
-import '../cubit/payroll_cubit.dart';
-import '../cubit/payroll_state.dart';
-import '../../../../shared/widgets/custom_button.dart';
+import 'package:go_router/go_router.dart';
 
-class PayrollScreen extends StatelessWidget {
+// Mock data models (as they were in the original file)
+class Employee {
+  final String id;
+  final String name;
+  final double basicSalary;
+
+  Employee({required this.id, required this.name, required this.basicSalary});
+}
+
+class Payroll {
+  final String id;
+  final String employeeId;
+  final String employeeName;
+  final double basicSalary;
+  final double totalAllowances;
+  final double totalDeductions;
+  final double netSalary;
+  final String status; // Draft, Approved, Paid
+  final DateTime month;
+
+  Payroll({
+    required this.id,
+    required this.employeeId,
+    required this.employeeName,
+    required this.basicSalary,
+    required this.totalAllowances,
+    required this.totalDeductions,
+    required this.netSalary,
+    required this.status,
+    required this.month,
+  });
+}
+
+class PayrollScreen extends StatefulWidget {
   const PayrollScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = SharedPrefHelper.getUser();
-// لو مفيش يوزر، هيكون فاضي
-    return BlocProvider(
-      create: (context) => PayrollCubit(),
-      child: const PayrollView(),
-    );
-  }
+  State<PayrollScreen> createState() => _PayrollScreenState();
 }
 
-class PayrollView extends StatefulWidget {
-  const PayrollView({super.key});
+class _PayrollScreenState extends State<PayrollScreen> {
+  // Mock data
+  final List<Payroll> _payrolls = [
+    Payroll(
+      id: '1',
+      employeeId: '101',
+      employeeName: 'أحمد محمود',
+      basicSalary: 8500,
+      totalAllowances: 1300,
+      totalDeductions: 935,
+      netSalary: 8865,
+      status: 'Paid',
+      month: DateTime(2025, 9),
+    ),
+    Payroll(
+      id: '2',
+      employeeId: '102',
+      employeeName: 'فاطمة الزهراء',
+      basicSalary: 9000,
+      totalAllowances: 1800,
+      totalDeductions: 990,
+      netSalary: 9810,
+      status: 'Approved',
+      month: DateTime(2025, 9),
+    ),
+    Payroll(
+      id: '3',
+      employeeId: '103',
+      employeeName: 'كريم عبد العزيز',
+      basicSalary: 7000,
+      totalAllowances: 500,
+      totalDeductions: 770,
+      netSalary: 6730,
+      status: 'Draft',
+      month: DateTime(2025, 9),
+    ),
+  ];
 
-  @override
-  State<PayrollView> createState() => _PayrollViewState();
-}
+  DateTime _selectedMonth = DateTime(2025, 9);
+  String _filterStatus = 'All';
 
-class _PayrollViewState extends State<PayrollView> {
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
+  List<Payroll> get _filteredPayrolls {
+    return _payrolls.where((payroll) {
+      final monthMatch = payroll.month.year == _selectedMonth.year &&
+          payroll.month.month == _selectedMonth.month;
+      final statusMatch =
+          _filterStatus == 'All' || payroll.status == _filterStatus;
+      return monthMatch && statusMatch;
+    }).toList();
   }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (_isBottom) {
-      context.read<PayrollCubit>().getPayrollHistory(
-            // userId: 'current-user-id',
-            refresh: false,
-          );
-    }
-  }
-
-  bool get _isBottom {
-    if (!_scrollController.hasClients) return false;
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.offset;
-    return currentScroll >= (maxScroll * 0.9);
-  }
+  // Semantic Colors for UI elements
+  static const Color successColor = Color(0xFF10B981);
+  static const Color warningColor = Color(0xFFF59E0B);
+  static const Color infoColor = Color(0xFF6366F1);
+  static const Color errorColor = Color(0xFFEF4444);
 
   @override
   Widget build(BuildContext context) {
+    // Summary calculations
+    final totalPaid = _payrolls
+        .where((p) => p.status == 'Paid')
+        .fold(0.0, (sum, p) => sum + p.netSalary);
+    final totalExpected = _payrolls.fold(0.0, (sum, p) => sum + p.netSalary);
+    final employeeCount = _payrolls.map((p) => p.employeeId).toSet().length;
+
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
+      appBar: AppBar(
+        title: const Text('لوحة تحكم الرواتب'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Payroll Management',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                CustomButton(
-                  text: 'Create Payroll',
-                  onPressed: () => _showCreatePayrollDialog(context),
-                  icon: Icons.add,
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-
-            // Summary Cards
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSummaryCard(
-                    'Total Salary',
-                    '\$12,500',
-                    Icons.attach_money,
-                    Colors.green,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildSummaryCard(
-                    'This Month',
-                    '\$4,200',
-                    Icons.calendar_month,
-                    Colors.blue,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildSummaryCard(
-                    'Pending',
-                    '3 Records',
-                    Icons.pending,
-                    Colors.orange,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildSummaryCard(
-                    'Paid',
-                    '12 Records',
-                    Icons.check_circle,
-                    Colors.green,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-
-            // Payroll History
-            const Text(
-              'Payroll History',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            Text(
+              'ملخص رواتب شهر سبتمبر 2025',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
+            _buildSummaryGrid(totalPaid, totalExpected, employeeCount),
+            const SizedBox(height: 24),
+            _buildFilterSection(),
+            const SizedBox(height: 24),
+            Text(
+              'تقرير الرواتب المفصل',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            _buildPayrollDataTable(),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('جاري إنشاء كشوفات الرواتب...'),
+              backgroundColor: successColor,
+            ),
+          );
+        },
+        tooltip: 'إنشاء كشوفات رواتب الشهر',
+        icon: const Icon(Icons.add),
+        label: const Text('إنشاء الرواتب'),
+        backgroundColor: successColor,
+      ),
+    );
+  }
 
-            Expanded(
-              child: BlocConsumer<PayrollCubit, PayrollState>(
-                listener: (context, state) {
-                  if (state is PayrollCreateSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('تم إنشاء كشف الراتب بنجاح'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  } else if (state is PayrollError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-                builder: (context, state) {
-                  if (state is PayrollLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is PayrollHistoryLoaded) {
-                    return ListView.builder(
-                      controller: _scrollController,
-                      itemCount: state.payrollList.length +
-                          (state.hasReachedMax ? 0 : 1),
-                      itemBuilder: (context, index) {
-                        if (index >= state.payrollList.length) {
-                          return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        }
+  Widget _buildSummaryGrid(
+      double totalPaid, double totalExpected, int employeeCount) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use GridView for responsiveness
+        return GridView.count(
+          crossAxisCount: constraints.maxWidth > 600 ? 4 : 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 2.5,
+          children: [
+            _buildSummaryCard(
+              title: 'إجمالي المدفوع',
+              value: '${totalPaid.toStringAsFixed(2)} EGP',
+              icon: Icons.check_circle_outline,
+              color: successColor,
+            ),
+            _buildSummaryCard(
+              title: 'الإجمالي المتوقع',
+              value: '${totalExpected.toStringAsFixed(2)} EGP',
+              icon: Icons.account_balance_wallet_outlined,
+              color: infoColor,
+            ),
+            _buildSummaryCard(
+              title: 'عدد الموظفين',
+              value: '$employeeCount',
+              icon: Icons.people_outline,
+              color: warningColor,
+            ),
+            _buildSummaryCard(
+              title: 'مسودات',
+              value:
+                  _payrolls.where((p) => p.status == 'Draft').length.toString(),
+              icon: Icons.drafts_outlined,
+              color: Colors.grey.shade600,
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-                        final payroll = state.payrollList[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ExpansionTile(
-                            leading: CircleAvatar(
-                              backgroundColor: _getStatusColor(payroll.status),
-                              child: Icon(
-                                _getStatusIcon(payroll.status),
-                                color: Colors.white,
-                              ),
-                            ),
-                            title: Text(
-                              'Payroll - ${payroll.period}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text(
-                              'Net Salary: \$${payroll.netSalary.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.green,
-                              ),
-                            ),
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(payroll.status)
-                                    .withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                payroll.status.name.toUpperCase(),
-                                style: TextStyle(
-                                  color: _getStatusColor(payroll.status),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  children: [
-                                    _buildPayrollDetailRow('Basic Salary',
-                                        '\$${payroll.basicSalary.toStringAsFixed(2)}'),
-                                    _buildPayrollDetailRow('Allowances',
-                                        '\$${payroll.allowances.toStringAsFixed(2)}'),
-                                    _buildPayrollDetailRow('Overtime',
-                                        '\$${payroll.overtime.toStringAsFixed(2)}'),
-                                    _buildPayrollDetailRow('Bonus',
-                                        '\$${payroll.bonus.toStringAsFixed(2)}'),
-                                    _buildPayrollDetailRow('Deductions',
-                                        '-\$${payroll.deductions.toStringAsFixed(2)}'),
-                                    const Divider(),
-                                    _buildPayrollDetailRow('Net Salary',
-                                        '\$${payroll.netSalary.toStringAsFixed(2)}',
-                                        isTotal: true),
-                                    const SizedBox(height: 8),
-                                    _buildPayrollDetailRow('Working Days',
-                                        '${payroll.actualWorkingDays}/${payroll.workingDays}'),
-                                    if (payroll.notes != null)
-                                      _buildPayrollDetailRow(
-                                          'Notes', payroll.notes!),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  } else if (state is PayrollError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error, size: 64, color: Colors.red),
-                          const SizedBox(height: 16),
-                          Text(state.message),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              context.read<PayrollCubit>().getPayrollHistory(
-                                    refresh: true,
-                                  );
-                            },
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return const Center(child: Text('No payroll data'));
-                },
-              ),
+  Widget _buildSummaryCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: color, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
           ],
         ),
@@ -280,149 +241,145 @@ class _PayrollViewState extends State<PayrollView> {
     );
   }
 
-  Widget _buildSummaryCard(
-      String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: color, size: 24),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+  Widget _buildFilterSection() {
+    return Card(
+      elevation: 0,
+      color: Colors.grey.shade50,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                value: _filterStatus,
+                decoration: const InputDecoration(
+                  labelText: 'فلترة حسب الحالة',
+                  border: InputBorder.none,
+                  filled: false,
                 ),
-                child: Icon(icon, color: color, size: 16),
+                items: const [
+                  DropdownMenuItem(value: 'All', child: Text('الكل')),
+                  DropdownMenuItem(value: 'Draft', child: Text('مسودة')),
+                  DropdownMenuItem(value: 'Approved', child: Text('معتمد')),
+                  DropdownMenuItem(value: 'Paid', child: Text('مدفوع')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _filterStatus = value);
+                  }
+                },
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
+            const SizedBox(width: 16),
+            TextButton.icon(
+              icon: const Icon(Icons.calendar_today_outlined),
+              label: Text('${_selectedMonth.month}/${_selectedMonth.year}'),
+              onPressed: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedMonth,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2030),
+                  initialEntryMode: DatePickerEntryMode.calendarOnly,
+                );
+                if (picked != null) {
+                  setState(() => _selectedMonth = picked);
+                }
+              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildPayrollDetailRow(String label, String value,
-      {bool isTotal = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              fontSize: isTotal ? 16 : 14,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-              fontSize: isTotal ? 16 : 14,
-              color: isTotal ? Colors.green : null,
-            ),
-          ),
-        ],
+  Widget _buildPayrollDataTable() {
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('اسم الموظف')),
+            DataColumn(label: Text('صافي الراتب'), numeric: true),
+            DataColumn(label: Text('الحالة')),
+            DataColumn(label: Text('إجراءات')),
+          ],
+          rows: _filteredPayrolls.map((payroll) {
+            return DataRow(
+              cells: [
+                DataCell(Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(payroll.employeeName,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                        'الأساسي: ${payroll.basicSalary.toStringAsFixed(0)} EGP'),
+                  ],
+                )),
+                DataCell(Text(
+                  '${payroll.netSalary.toStringAsFixed(2)} EGP',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: successColor),
+                )),
+                DataCell(_buildStatusChip(payroll.status)),
+                DataCell(
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.visibility_outlined,
+                            color: infoColor),
+                        onPressed: () {},
+                        tooltip: 'عرض التفاصيل',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.print_outlined,
+                            color: warningColor),
+                        onPressed: () {},
+                        tooltip: 'طباعة القسيمة',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
       ),
     );
   }
 
-  void _showCreatePayrollDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Create New Payroll'),
-        content: const Text(
-            'This feature will open a form to create a new payroll record.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<PayrollCubit>().createPayroll(
-                    // userId: 'current-user-id',
-                    period: DateFormat('yyyy-MM').format(DateTime.now()),
-                    basicSalary: 5000.0,
-                    allowances: 500.0,
-                    deductions: 200.0,
-                    overtime: 300.0,
-                    bonus: 100.0,
-                    workingDays: 22,
-                    actualWorkingDays: 20,
-                    notes: 'Monthly payroll',
-                  );
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getStatusColor(status) {
-    switch (status.toString()) {
-      case 'PayrollStatus.draft':
-        return Colors.grey;
-      case 'PayrollStatus.approved':
-        return Colors.blue;
-      case 'PayrollStatus.paid':
-        return Colors.green;
-      case 'PayrollStatus.cancelled':
-        return Colors.red;
+  Widget _buildStatusChip(String status) {
+    Color color;
+    String label;
+    switch (status) {
+      case 'Paid':
+        color = successColor;
+        label = 'مدفوع';
+        break;
+      case 'Approved':
+        color = infoColor;
+        label = 'معتمد';
+        break;
+      case 'Draft':
+        color = Colors.grey.shade600;
+        label = 'مسودة';
+        break;
       default:
-        return Colors.grey;
+        color = Colors.black;
+        label = 'غير معروف';
     }
-  }
-
-  IconData _getStatusIcon(status) {
-    switch (status.toString()) {
-      case 'PayrollStatus.draft':
-        return Icons.edit;
-      case 'PayrollStatus.approved':
-        return Icons.check;
-      case 'PayrollStatus.paid':
-        return Icons.payment;
-      case 'PayrollStatus.cancelled':
-        return Icons.cancel;
-      default:
-        return Icons.help;
-    }
+    return Chip(
+      label: Text(label,
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold)),
+      backgroundColor: color,
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+      visualDensity: VisualDensity.compact,
+    );
   }
 }
