@@ -9,6 +9,8 @@ import 'package:manzoma/features/branches/domain/entities/branch_entity.dart';
 import 'package:manzoma/features/branches/presentation/screens/branches_edit_screen.dart';
 import 'package:manzoma/features/employee/presentation/screens/attendance_screen.dart';
 import 'package:manzoma/features/employee/presentation/screens/employee_home_screen.dart';
+import 'package:manzoma/features/payroll/presentation/screens/employee_salary_screen.dart';
+import 'package:manzoma/features/payroll/presentation/screens/payroll_rules_screen.dart';
 import 'package:manzoma/features/users/presentation/screens/users_edit_screen.dart';
 import 'package:manzoma/shared/widgets/app_sidebar.dart';
 import 'package:manzoma/shared/widgets/app_topbar.dart';
@@ -90,6 +92,19 @@ class AppRouter {
         path: RouteNames.payroll,
         name: 'payroll',
         builder: (context, state) => const MainAppShell(child: PayrollScreen()),
+      ),
+      GoRoute(
+        path: RouteNames.payrollSettings,
+        name: 'payrollRules',
+        builder: (context, state) =>
+            const MainAppShell(child: PayrollRulesScreen()),
+      ),
+
+      GoRoute(
+        path: RouteNames.employeeSalary,
+        name: 'employeeSalary',
+        builder: (context, state) =>
+            const MainAppShell(child: EmployeeSalaryScreen()),
       ),
 
       // Clients Routes (Super Admin only)

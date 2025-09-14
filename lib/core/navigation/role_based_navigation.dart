@@ -70,8 +70,14 @@ class RoleBasedNavigation {
           allowedRoles: [UserRole.superAdmin, UserRole.cad],
         ),
         NavigationItem(
-          titleKey: 'nav_payroll_settings',
-          route: '/payroll/settings',
+          titleKey: 'nav_payroll_rules_settings',
+          route: '/payroll/rules/settings',
+          icon: Icons.settings,
+          allowedRoles: [UserRole.superAdmin, UserRole.cad],
+        ),
+        NavigationItem(
+          titleKey: 'nav_employee_salary_structure',
+          route: '/payroll/employee/salary',
           icon: Icons.settings,
           allowedRoles: [UserRole.superAdmin, UserRole.cad],
         ),

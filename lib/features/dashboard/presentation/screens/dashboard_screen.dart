@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:manzoma/core/di/injection_container.dart';
 import 'package:manzoma/core/storage/shared_pref_helper.dart';
 import 'package:manzoma/features/clients/domain/usecases/get_clients_usecase.dart';
@@ -57,6 +58,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         _userRole = user.role;
       });
+      
+      // إذا كان المستخدم موظف، نوجهه لواجهة الموظفين
+      if (user.role == UserRole.employee) {
+        // استخدام WidgetsBinding لضمان أن التنقل يحدث بعد انتهاء البناء
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.go('/employee/home');
+        });
+      }
     }
   }
 

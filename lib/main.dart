@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:manzoma/core/di/injection_container.dart' as di;
 import 'package:manzoma/core/storage/shared_pref_helper.dart' as storage;
+import 'package:manzoma/features/attendance/presentation/cubit/attendance_cubit.dart';
 
 import 'package:manzoma/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:manzoma/features/branches/presentation/cubit/branch_cubit.dart';
 import 'package:manzoma/features/clients/presentation/cubit/client_cubit.dart';
+import 'package:manzoma/features/payroll/presentation/cubit/payroll_cubit.dart';
 import 'package:manzoma/features/users/presentation/cubit/user_cubit.dart';
 
 import 'package:manzoma/core/theme/cubit/theme_cubit.dart';
@@ -21,6 +24,16 @@ void main() async {
   await storage.SharedPrefHelper.init();
   await di.init(); // تأكد ان فيه register لـ ThemeCubit و LocaleCubit
 
+  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // هنا ممكن تدي Alert للـ user انه لازم يفتح الـ GPS
+    debugPrint("Location services are disabled.");
+  }
+
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
   runApp(const MyApp());
 }
 
@@ -33,9 +46,11 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<ThemeCubit>(create: (_) => di.sl<ThemeCubit>()),
         BlocProvider<LocaleCubit>(create: (_) => di.sl<LocaleCubit>()),
+        BlocProvider<AttendanceCubit>(create: (_) => di.sl<AttendanceCubit>()),
         BlocProvider<ClientCubit>(create: (_) => di.sl<ClientCubit>()),
         BlocProvider<UserCubit>(create: (_) => di.sl<UserCubit>()),
         BlocProvider<AuthCubit>(create: (_) => di.sl<AuthCubit>()),
+        BlocProvider<PayrollCubit>(create: (_) => di.sl<PayrollCubit>()),
         BlocProvider<BranchCubit>(create: (_) => di.sl<BranchCubit>()),
       ],
       child: Builder(
