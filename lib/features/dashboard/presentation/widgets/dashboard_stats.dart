@@ -36,7 +36,7 @@ class DashboardStats extends StatelessWidget {
               crossAxisCount: stats.length > 2 ? 4 : 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 1.5,
+              childAspectRatio: 5,
             ),
             itemCount: stats.length,
             itemBuilder: (context, index) {
