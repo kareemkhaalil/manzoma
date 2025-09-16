@@ -13,6 +13,24 @@ import 'package:manzoma/features/clients/domain/usecases/get_client_by_id_usecas
 import 'package:manzoma/features/clients/domain/usecases/get_clients_usecase.dart';
 import 'package:manzoma/features/clients/domain/usecases/update_client_usecase.dart';
 import 'package:manzoma/features/clients/presentation/cubit/client_cubit.dart';
+import 'package:manzoma/features/payroll/data/datasources/payroll_details_datasource.dart';
+import 'package:manzoma/features/payroll/data/datasources/payroll_rules_remote_datasource.dart';
+import 'package:manzoma/features/payroll/data/repositories/payroll_details_repository_impl.dart';
+import 'package:manzoma/features/payroll/data/repositories/payroll_rule_repository_impl.dart';
+import 'package:manzoma/features/payroll/domain/repositories/payroll_details_repository.dart';
+import 'package:manzoma/features/payroll/domain/repositories/payroll_rules_repo.dart';
+import 'package:manzoma/features/payroll/domain/usecases/add_payroll_detail.dart';
+import 'package:manzoma/features/payroll/domain/usecases/create_payroll.dart';
+import 'package:manzoma/features/payroll/domain/usecases/create_payroll_rule.dart';
+import 'package:manzoma/features/payroll/domain/usecases/delete_payroll.dart';
+import 'package:manzoma/features/payroll/domain/usecases/delete_payroll_detail.dart';
+import 'package:manzoma/features/payroll/domain/usecases/delete_payroll_rule.dart';
+import 'package:manzoma/features/payroll/domain/usecases/get_payroll_by_id.dart';
+import 'package:manzoma/features/payroll/domain/usecases/get_payroll_details.dart';
+import 'package:manzoma/features/payroll/domain/usecases/get_payroll_rules.dart';
+import 'package:manzoma/features/payroll/domain/usecases/get_payrolls.dart';
+import 'package:manzoma/features/payroll/domain/usecases/update_payroll.dart';
+import 'package:manzoma/features/payroll/domain/usecases/update_payroll_rule.dart';
 import 'package:manzoma/features/payroll/presentation/cubit/payroll_cubit.dart';
 import 'package:manzoma/features/users/domain/usecases/update_users_usecase.dart';
 import 'package:manzoma/features/users/presentation/cubit/user_cubit.dart';
@@ -58,8 +76,6 @@ import '../../features/attendance/domain/usecases/get_attendance_history_usecase
 import '../../features/payroll/data/datasources/payroll_remote_datasource.dart';
 import '../../features/payroll/data/repositories/payroll_repository_impl.dart';
 import '../../features/payroll/domain/repositories/payroll_repository.dart';
-import '../../features/payroll/domain/usecases/create_payroll_usecase.dart';
-import '../../features/payroll/domain/usecases/get_payroll_history_usecase.dart';
 
 final sl = GetIt.instance;
 
@@ -80,8 +96,68 @@ Future<void> init() async {
   sl.registerFactory<AuthCubit>(() => AuthCubit());
 
   sl.registerFactory<AttendanceCubit>(() => AttendanceCubit());
+//! Cubits
+  sl.registerFactory<PayrollCubit>(() => PayrollCubit(
+        createPayroll: sl(),
+        getPayrolls: sl(),
+        getPayrollById: sl(),
+        updatePayroll: sl(),
+        deletePayroll: sl(),
+        getPayrollDetails: sl(),
+        addPayrollDetail: sl(),
+        deletePayrollDetail: sl(),
+        getPayrollRules: sl(),
+        createPayrollRule: sl(),
+        updatePayrollRule: sl(),
+        deletePayrollRule: sl(),
+      ));
 
-  sl.registerFactory<PayrollCubit>(() => PayrollCubit());
+//! Payroll UseCases
+  sl.registerLazySingleton<CreatePayroll>(() => CreatePayroll(sl()));
+  sl.registerLazySingleton<GetPayrolls>(() => GetPayrolls(sl()));
+  sl.registerLazySingleton<GetPayrollById>(() => GetPayrollById(sl()));
+  sl.registerLazySingleton<UpdatePayroll>(() => UpdatePayroll(sl()));
+  sl.registerLazySingleton<DeletePayroll>(() => DeletePayroll(sl()));
+
+  sl.registerLazySingleton<GetPayrollDetails>(() => GetPayrollDetails(sl()));
+  sl.registerLazySingleton<AddPayrollDetail>(() => AddPayrollDetail(sl()));
+  sl.registerLazySingleton<DeletePayrollDetail>(
+      () => DeletePayrollDetail(sl()));
+
+  sl.registerLazySingleton<GetPayrollRules>(() => GetPayrollRules(sl()));
+  sl.registerLazySingleton<CreatePayrollRule>(() => CreatePayrollRule(sl()));
+  sl.registerLazySingleton<UpdatePayrollRule>(() => UpdatePayrollRule(sl()));
+  sl.registerLazySingleton<DeletePayrollRule>(() => DeletePayrollRule(sl()));
+
+//! Payroll Repository
+  sl.registerLazySingleton<PayrollRepository>(
+    () => PayrollRepositoryImpl(
+      remoteDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+//! Payroll Detail Repository
+  sl.registerLazySingleton<PayrollDetailRepository>(
+    () => PayrollDetailRepositoryImpl(remoteDataSource: sl()),
+  );
+
+//! Payroll Detail DataSource
+  sl.registerLazySingleton<PayrollDetailRemoteDataSource>(
+    () => PayrollDetailRemoteDataSourceImpl(client: sl()),
+  );
+  sl.registerLazySingleton<PayrollRemoteDataSource>(
+    () => PayrollRemoteDataSourceImpl(client: sl()),
+  );
+  //! Payroll Rules DataSource
+  sl.registerLazySingleton<PayrollRulesRemoteDataSource>(
+    () => PayrollRulesRemoteDataSourceImpl(client: sl()),
+  );
+
+//! Payroll Rules Repository
+  sl.registerLazySingleton<PayrollRulesRepository>(
+    () => PayrollRulesRepositoryImpl(remoteDataSource: sl(), networkInfo: sl()),
+  );
 
   sl.registerFactory<UserCubit>(() => UserCubit(
         getUsersUseCase: sl(),
@@ -179,23 +255,6 @@ Future<void> init() async {
 
   sl.registerLazySingleton<AttendanceRepository>(
     () => AttendanceRepositoryImpl(
-      remoteDataSource: sl(),
-      networkInfo: sl(),
-    ),
-  );
-
-  //! Payroll
-  sl.registerLazySingleton<CreatePayrollUseCase>(
-      () => CreatePayrollUseCase(sl()));
-  sl.registerLazySingleton<GetPayrollHistoryUseCase>(
-      () => GetPayrollHistoryUseCase(sl()));
-
-  sl.registerLazySingleton<PayrollRemoteDataSource>(
-    () => PayrollRemoteDataSourceImpl(supabaseClient: sl()),
-  );
-
-  sl.registerLazySingleton<PayrollRepository>(
-    () => PayrollRepositoryImpl(
       remoteDataSource: sl(),
       networkInfo: sl(),
     ),

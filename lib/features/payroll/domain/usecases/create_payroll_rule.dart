@@ -1,16 +1,15 @@
 import 'package:dartz/dartz.dart';
 import 'package:manzoma/features/payroll/domain/entities/payroll_rules_entity.dart';
 import 'package:manzoma/features/payroll/domain/repositories/payroll_rules_repo.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/usecases/usecase.dart';
 
-class GetAllRulesUseCase implements UseCase<List<PayrollRuleEntity>, NoParams> {
+import '../../../../core/error/failures.dart';
+
+class CreatePayrollRule {
   final PayrollRulesRepository repository;
 
-  GetAllRulesUseCase(this.repository);
+  CreatePayrollRule(this.repository);
 
-  @override
-  Future<Either<Failure, List<PayrollRuleEntity>>> call(NoParams params) async {
-    return await repository.getAllRules();
+  Future<Either<Failure, PayrollRuleEntity>> call(PayrollRuleEntity rule) {
+    return repository.createRule(rule);
   }
 }
