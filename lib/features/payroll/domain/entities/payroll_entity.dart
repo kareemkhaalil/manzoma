@@ -1,40 +1,33 @@
 import 'package:equatable/equatable.dart';
 
-enum PayrollStatus {
-  draft,
-  approved,
-  paid,
-  cancelled,
-}
-
 class PayrollEntity extends Equatable {
   final String id;
+  final String tenantId;
   final String userId;
   final String userName;
-  final String period; // e.g., "2024-01"
+  final String period;
+  final DateTime periodStart;
+  final DateTime periodEnd;
   final double basicSalary;
-  final double allowances;
-  final double deductions;
-  final double overtime;
-  final double bonus;
+  final double gross;
   final double netSalary;
   final int workingDays;
   final int actualWorkingDays;
-  final PayrollStatus status;
+  final String status;
   final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   const PayrollEntity({
     required this.id,
+    required this.tenantId,
     required this.userId,
     required this.userName,
     required this.period,
+    required this.periodStart,
+    required this.periodEnd,
     required this.basicSalary,
-    required this.allowances,
-    required this.deductions,
-    required this.overtime,
-    required this.bonus,
+    required this.gross,
     required this.netSalary,
     required this.workingDays,
     required this.actualWorkingDays,
@@ -47,14 +40,14 @@ class PayrollEntity extends Equatable {
   @override
   List<Object?> get props => [
         id,
+        tenantId,
         userId,
         userName,
         period,
+        periodStart,
+        periodEnd,
         basicSalary,
-        allowances,
-        deductions,
-        overtime,
-        bonus,
+        gross,
         netSalary,
         workingDays,
         actualWorkingDays,
@@ -63,5 +56,27 @@ class PayrollEntity extends Equatable {
         createdAt,
         updatedAt,
       ];
-}
 
+  // to json
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'tenantId': tenantId,
+      'userId': userId,
+      'userName': userName,
+      'period': period,
+      'periodStart': periodStart.toIso8601String(),
+      'periodEnd': periodEnd.toIso8601String(),
+      'basicSalary': basicSalary,
+      'gross': gross,
+      'netSalary': netSalary,
+      'workingDays': workingDays,
+      'actualWorkingDays': actualWorkingDays,
+      'status': status,
+      'notes': notes,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+}

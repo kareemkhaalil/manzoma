@@ -1,7 +1,7 @@
-import 'package:huma_plus/core/enums/user_role.dart';
-import 'package:huma_plus/core/storage/shared_pref_helper.dart';
-import 'package:huma_plus/features/auth/domain/entities/user_entity.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
+import 'package:manzoma/core/enums/user_role.dart';
+import 'package:manzoma/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/features/auth/domain/entities/user_entity.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/supabase_client.dart';
 import '../models/user_model.dart';
@@ -44,59 +44,73 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String password,
   }) async {
     try {
+      // Sign in with Supabase Auth
       final response = await supabaseClient.auth.signInWithPassword(
         email: email,
         password: password,
       );
+
       if (response.user == null) {
-        throw const AuthException(message: 'فشل في تسجيل الدخول');
+        throw const AuthException(
+            'فشل في تسجيل الدخول: بيانات المستخدم غير موجودة');
       }
-// داخل signIn()
+
+      // Fetch user profile from the users table
       final profileResponse = await supabaseClient
           .from('users')
           .select()
           .eq('id', response.user!.id)
           .maybeSingle();
 
+      // Check if profile exists
+      if (profileResponse == null) {
+        throw ServerException(
+          message: 'لم يتم العثور على ملف المستخدم في قاعدة البيانات',
+        );
+      }
+
       print('Profile from DB: $profileResponse');
 
-      final roleEnum = UserRoleX.fromValue(
-          (profileResponse?['role'] ?? 'employee') as String?);
-      print('role enum $roleEnum');
+      // Parse role safely
+      final roleEnum =
+          UserRoleX.fromValue(profileResponse['role'] as String? ?? 'employee');
+      print('Role enum: $roleEnum');
 
+      // Create user model
       final map = <String, dynamic>{
         'id': response.user!.id,
         'email': response.user?.email ?? '',
-        'tenant_id': profileResponse?['tenant_id'] ?? '',
-        'branch_id': profileResponse?['branch_id'],
-        'role': roleEnum.toValue(), // مهم
-        'name': profileResponse?['name'] ?? response.user?.email ?? '',
-        'phone': profileResponse?['phone'],
-        'avatar': profileResponse?['avatar'],
-        'is_active': profileResponse?['is_active'] ?? true,
-        'base_salary': profileResponse?['base_salary'] ?? 0,
-        'allowances': profileResponse?['allowances'] ?? const [],
-        'deductions': profileResponse?['deductions'] ?? const [],
-        'work_schedule': profileResponse?['work_schedule'] ?? const {},
-        'created_at': profileResponse?['created_at'],
-        'updated_at': profileResponse?['updated_at'],
+        'tenant_id': profileResponse['tenant_id'] as String? ?? '',
+        'branch_id': profileResponse['branch_id'] as String?,
+        'role': roleEnum.toValue(),
+        'name':
+            profileResponse['name'] as String? ?? response.user?.email ?? '',
+        'phone': profileResponse['phone'] as String?,
+        'avatar': profileResponse['avatar'] as String?,
+        'is_active': profileResponse['is_active'] as bool? ?? true,
+        'base_salary': profileResponse['base_salary'] != null
+            ? double.tryParse(profileResponse['base_salary'].toString()) ?? 0.0
+            : 0.0,
+        'allowances':
+            (profileResponse['allowances'] as List?)?.toList() ?? const [],
+        'deductions':
+            (profileResponse['deductions'] as List?)?.toList() ?? const [],
+        'work_schedule': (profileResponse['work_schedule'] as Map?)
+                ?.cast<String, dynamic>() ??
+            const {},
+        'created_at': profileResponse['created_at'] as String?,
+        'updated_at': profileResponse['updated_at'] as String?,
       };
 
       final loggedInUser = UserModel.fromJson(map);
       await SharedPrefHelper.saveUser(loggedInUser);
 
       return loggedInUser;
-
-      return UserModel.fromJson(map);
     } on PostgrestException catch (e) {
-      print(" error after post data login ");
-      throw ServerException(
-        message: e.message,
-        statusCode: e.code != null ? int.tryParse(e.code!) : null,
-      );
+      print('PostgrestException: ${e.message}');
+      throw ServerException(message: e.message);
     } catch (e) {
-      print(" error after post data login end");
-
+      print('General error: $e');
       throw ServerException(message: e.toString());
     }
   }
@@ -115,7 +129,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.user == null) {
-        throw const AuthException(message: 'فشل في إنشاء الحساب');
+        throw const AuthException('فشل في إنشاء الحساب');
       }
 
       // Create user profile
@@ -165,12 +179,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           .from('users_view')
           .select()
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
       return UserModel.fromJson({
         'id': user.id,
         'email': user.email!,
-        ...profileResponse,
+        ...?profileResponse,
       });
     } on PostgrestException catch (e) {
       throw ServerException(
@@ -203,9 +217,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           .update(updateData)
           .eq('id', userId)
           .select()
-          .single();
+          .maybeSingle();
 
-      return UserModel.fromJson(response);
+      return UserModel.fromJson(response!);
     } on PostgrestException catch (e) {
       throw ServerException(
         message: e.message,

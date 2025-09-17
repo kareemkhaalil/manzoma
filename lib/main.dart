@@ -1,24 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huma_plus/features/clients/presentation/cubit/client_cubit.dart';
+import 'package:geolocator/geolocator.dart';
+
+import 'package:manzoma/core/di/injection_container.dart' as di;
+import 'package:manzoma/core/storage/shared_pref_helper.dart' as storage;
+import 'package:manzoma/features/attendance/presentation/cubit/attendance_cubit.dart';
+
+import 'package:manzoma/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:manzoma/features/branches/presentation/cubit/branch_cubit.dart';
+import 'package:manzoma/features/clients/presentation/cubit/client_cubit.dart';
+import 'package:manzoma/features/payroll/presentation/cubit/payroll_cubit.dart';
+import 'package:manzoma/features/users/presentation/cubit/user_cubit.dart';
+
+import 'package:manzoma/core/theme/cubit/theme_cubit.dart';
+import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
+import 'core/localization/app_localizations.dart';
 import 'core/navigation/app_router.dart';
-
-// 👍 صحح الأسماء هنا:
-import 'core/storage/shared_pref_helper.dart' as storage;
-import 'core/di/injection_container.dart' as di;
-
-import 'features/auth/presentation/cubit/login_cubit.dart';
-import 'features/users/presentation/cubit/user_cubit.dart';
-import 'features/branches/presentation/cubit/branch_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await di.initializeSupabase();
-  await storage.SharedPrefHelper.init(); // ← ده الهيلبر الحقيقي
-  await di.init(); // ← بعده
+  await storage.SharedPrefHelper.init();
+  await di.init(); // تأكد ان فيه register لـ ThemeCubit و LocaleCubit
 
+  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // هنا ممكن تدي Alert للـ user انه لازم يفتح الـ GPS
+    debugPrint("Location services are disabled.");
+  }
+
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
   runApp(const MyApp());
 }
 
@@ -27,57 +42,35 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(1920, 1080),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (context, child) {
-        return MultiBlocProvider(
-          providers: [
-            BlocProvider<LoginCubit>(
-              create: (_) => di.sl<LoginCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ThemeCubit>(create: (_) => di.sl<ThemeCubit>()),
+        BlocProvider<LocaleCubit>(create: (_) => di.sl<LocaleCubit>()),
+        BlocProvider<AttendanceCubit>(create: (_) => di.sl<AttendanceCubit>()),
+        BlocProvider<ClientCubit>(create: (_) => di.sl<ClientCubit>()),
+        BlocProvider<UserCubit>(create: (_) => di.sl<UserCubit>()),
+        BlocProvider<AuthCubit>(create: (_) => di.sl<AuthCubit>()),
+        BlocProvider<PayrollCubit>(create: (_) => di.sl<PayrollCubit>()),
+        BlocProvider<BranchCubit>(create: (_) => di.sl<BranchCubit>()),
+      ],
+      child: Builder(
+        builder: (context) {
+          return ScreenUtilInit(
+            designSize: const Size(1920, 1080), // غيرها حسب التصميم عندك
+            minTextAdapt: true,
+            splitScreenMode: true,
+            child: MaterialApp.router(
+              debugShowCheckedModeBanner: false,
+              title: 'Manzoma',
+              theme: context.watch<ThemeCubit>().state.themeData,
+              locale: context.watch<LocaleCubit>().state.locale,
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              routerConfig: AppRouter.router,
             ),
-            BlocProvider<ClientCubit>(create: (_) => di.getIt<ClientCubit>()),
-            BlocProvider<UserCubit>(
-              create: (_) => di.sl<UserCubit>(),
-            ),
-            BlocProvider<BranchCubit>(
-              create: (_) => di.sl<BranchCubit>(),
-            ),
-          ],
-          child: MaterialApp.router(
-            title: 'HumaPlus - Smart Attendance & Payroll',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              primarySwatch: Colors.blue,
-              primaryColor: const Color(0xFF2563EB),
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-              fontFamily: 'Inter',
-              appBarTheme: const AppBarTheme(
-                elevation: 0,
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black87,
-              ),
-              elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              inputDecorationTheme: InputDecorationTheme(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-            ),
-            routerConfig: AppRouter.router,
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

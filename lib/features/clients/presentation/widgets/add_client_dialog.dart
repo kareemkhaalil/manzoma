@@ -371,8 +371,9 @@ class _AddClientDialogState extends State<AddClientDialog> {
               subscriptionEnd: _subscriptionEnd!,
               billingAmount: billingAmount,
               billingInterval: _selectedBillingInterval,
-              allowedBranches: int.tryParse(_allowedBranchesController.text),
-              allowedUsers: int.tryParse(_allowedUsersController.text),
+              allowedBranches:
+                  int.tryParse(_allowedBranchesController.text) ?? 1,
+              allowedUsers: int.tryParse(_allowedUsersController.text) ?? 5,
             );
       }
       Navigator.of(context).pop();

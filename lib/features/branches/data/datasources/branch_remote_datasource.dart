@@ -61,10 +61,13 @@ class BranchRemoteDataSourceImpl implements BranchRemoteDataSource {
   @override
   Future<BranchModel> getBranchById(String id) async {
     try {
-      final response =
-          await supabaseClient.from('branches').select().eq('id', id).single();
+      final response = await supabaseClient
+          .from('branches')
+          .select()
+          .eq('id', id)
+          .maybeSingle();
 
-      return BranchModel.fromJson(response);
+      return BranchModel.fromJson(response!);
     } catch (e) {
       throw Exception('Failed to get branch: $e');
     }
@@ -74,13 +77,19 @@ class BranchRemoteDataSourceImpl implements BranchRemoteDataSource {
   Future<BranchModel> createBranch(BranchModel branch) async {
     try {
       final response = await supabaseClient
-          .from('branches')
-          .insert(branch.toCreateJson())
+          .rpc(
+            'create_branch_and_update_tenant', // اسم الدالة
+            params: {
+              'branch_data': branch.toCreateJson()
+            }, // تمرير البيانات كـ JSON
+          )
           .select()
-          .single();
+          .maybeSingle();
 
-      return BranchModel.fromJson(response);
+      print('Response from createBranch: $response');
+      return BranchModel.fromJson(response!);
     } catch (e) {
+      print('Error occurred while creating branch: $e');
       throw Exception('Failed to create branch: $e');
     }
   }
@@ -93,9 +102,9 @@ class BranchRemoteDataSourceImpl implements BranchRemoteDataSource {
           .update(branch.toCreateJson())
           .eq('id', id)
           .select()
-          .single();
+          .maybeSingle();
 
-      return BranchModel.fromJson(response);
+      return BranchModel.fromJson(response!);
     } catch (e) {
       throw Exception('Failed to update branch: $e');
     }

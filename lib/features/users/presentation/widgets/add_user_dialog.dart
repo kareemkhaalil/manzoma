@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 import '../../domain/entities/user_entity.dart';
 import '../cubit/user_cubit.dart';
 

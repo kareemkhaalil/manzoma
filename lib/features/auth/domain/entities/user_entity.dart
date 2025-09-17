@@ -1,4 +1,4 @@
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 
 class UserEntity {
   final String id;

@@ -1,3 +1,4 @@
+import 'package:manzoma/core/location/location_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/attendance_model.dart';
@@ -44,7 +45,6 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
   final SupabaseClient supabaseClient;
 
   AttendanceRemoteDataSourceImpl({required this.supabaseClient});
-
   @override
   Future<AttendanceModel> checkIn({
     required String userId,
@@ -55,33 +55,84 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
 
-      // Check if user already checked in today
-      final existingAttendance = await supabaseClient
-          .from('attendance')
-          .select()
-          .eq('user_id', userId)
-          .eq('date', today.toIso8601String().split('T')[0])
+      // ✅ Get current location
+      final currentLocation = await LocationHelper.getCurrentLocation();
+      final double currentLat = currentLocation.latitude;
+      final double currentLng = currentLocation.longitude;
+
+      // ✅ Get user profile with client_id
+      final userProfile = await supabaseClient
+          .from('users')
+          .select('name, tenant_id')
+          .eq('id', userId)
           .maybeSingle();
 
-      if (existingAttendance != null) {
-        throw const ServerException(
-            message: 'تم تسجيل الحضور مسبقاً لهذا اليوم');
+      final clientId = userProfile!['tenant_id'];
+
+      if (clientId == null) {
+        throw ServerException(message: "المستخدم غير مرتبط بعميل");
       }
 
-      // Get user info
-      final userProfile = await supabaseClient
-          .from('profiles')
-          .select('name')
-          .eq('id', userId)
-          .single();
+      // ✅ Get all branches for this client
+      final branches = await supabaseClient
+          .from('branches')
+          .select('id, name, latitude, longitude, radius_meters')
+          .eq('tenant_id', clientId);
+
+      if (branches.isEmpty) {
+        throw ServerException(message: "لم يتم العثور على أي فروع للعميل");
+      }
+
+      // ✅ Check if user is inside any branch radius
+      Map<String, dynamic>? matchedBranch;
+      double? matchedDistance;
+
+      for (final branch in branches) {
+        final branchLat = (branch['latitude'] as num).toDouble();
+        final branchLng = (branch['longitude'] as num).toDouble();
+        final branchRadius = (branch['radius_meters'] as num).toDouble();
+
+        final distance = LocationHelper.calculateDistanceMeters(
+          currentLat,
+          currentLng,
+          branchLat,
+          branchLng,
+        );
+
+        if (distance <= branchRadius) {
+          matchedBranch = branch;
+          matchedDistance = distance;
+          break; // أول فرع لقيناه كفاية
+        }
+      }
+
+      if (matchedBranch == null) {
+        throw ServerException(message: "أنت خارج نطاق أي فرع تابع لهذا العميل");
+      }
+
+      // ✅ Check if already checked in today
+      // final existingAttendance = await supabaseClient
+      //     .from('attendance')
+      //     .select()
+      //     .eq('user_id', userId)
+      //     .eq('date', today.toIso8601String().split('T')[0])
+      //     .maybeSingle();
+
+      // if (existingAttendance != null) {
+      //   throw const ServerException(
+      //       message: 'تم تسجيل الحضور مسبقاً لهذا اليوم');
+      // }
 
       final attendanceData = {
         'user_id': userId,
-        'user_name': userProfile['name'],
+        // 'user_name': userProfile['name'],
+        'branch_id': matchedBranch['id'],
+        'tenant_id': clientId,
         'date': today.toIso8601String().split('T')[0],
         'check_in_time': now.toIso8601String(),
         'status': 'present',
-        'location': location,
+        // 'check_in_lat': currentLat,
+        // 'check_in_lng': currentLng,
         'notes': notes,
         'created_at': now.toIso8601String(),
         'updated_at': now.toIso8601String(),
@@ -91,9 +142,9 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
           .from('attendance')
           .insert(attendanceData)
           .select()
-          .single();
+          .maybeSingle();
 
-      return AttendanceModel.fromJson(response);
+      return AttendanceModel.fromJson(response!);
     } on PostgrestException catch (e) {
       throw ServerException(
         message: e.message,
@@ -101,6 +152,7 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
       );
     } catch (e) {
       if (e is ServerException) rethrow;
+      print("Error occurred while checking in datasource: ${e.toString()}");
       throw ServerException(message: e.toString());
     }
   }
@@ -127,9 +179,9 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
           .update(updateData)
           .eq('id', attendanceId)
           .select()
-          .single();
+          .maybeSingle();
 
-      return AttendanceModel.fromJson(response);
+      return AttendanceModel.fromJson(response!);
     } on PostgrestException catch (e) {
       throw ServerException(
         message: e.message,
@@ -258,9 +310,9 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
           .update(updateData)
           .eq('id', attendanceId)
           .select()
-          .single();
+          .maybeSingle();
 
-      return AttendanceModel.fromJson(response);
+      return AttendanceModel.fromJson(response!);
     } on PostgrestException catch (e) {
       throw ServerException(
         message: e.message,

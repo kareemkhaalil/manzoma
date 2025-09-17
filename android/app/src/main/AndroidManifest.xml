@@ -1,8 +1,7 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.bashkatep">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.manzoma">
 
     <application
-        android:label="bashkatep
-"
+        android:label="manzoma"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

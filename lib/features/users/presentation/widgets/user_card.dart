@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huma_plus/core/entities/user_entity.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
+import 'package:manzoma/core/enums/user_role.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserCard extends StatelessWidget {
   final UserEntity user;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit; // 👈 أضف callback للتعديل
+  final VoidCallback? onDelete; // 👈 أضف callback للحذف (اختياري)
 
   const UserCard({
     super.key,
     required this.user,
     this.onTap,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -30,8 +36,7 @@ class UserCard extends StatelessWidget {
               // Avatar
               CircleAvatar(
                 radius: 24.r,
-                backgroundColor:
-                    _getRoleColor(user.role.toString()).withOpacity(0.1),
+                backgroundColor: _getRoleColor(user.role).withOpacity(0.1),
                 child: user.avatar != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(24.r),
@@ -53,7 +58,7 @@ class UserCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user.displayName,
+                      user.displayName ?? user.name ?? 'غير محدد',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
@@ -79,15 +84,14 @@ class UserCard extends StatelessWidget {
                             vertical: 4.h,
                           ),
                           decoration: BoxDecoration(
-                            color: _getRoleColor(user.role.toString())
-                                .withOpacity(0.1),
+                            color: _getRoleColor(user.role).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Text(
-                            _getRoleDisplayName(user.role.toString()),
+                            _getRoleDisplayName(user.role),
                             style: TextStyle(
                               fontSize: 12.sp,
-                              color: _getRoleColor(user.role.toString()),
+                              color: _getRoleColor(user.role),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -123,7 +127,7 @@ class UserCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${user.baseSalary.toStringAsFixed(0)} ج.م',
+                    '${(user.baseSalary ?? 0).toStringAsFixed(0)} ج.م',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
@@ -141,10 +145,43 @@ class UserCard extends StatelessWidget {
                 ],
               ),
               SizedBox(width: 8.w),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16.w,
-                color: Colors.grey[400],
+              // 👈 استبدل الأيقونة بـ PopupMenuButton
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit' && onEdit != null) {
+                    onEdit!();
+                  } else if (value == 'delete' && onDelete != null) {
+                    onDelete!();
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, color: Colors.blue),
+                        SizedBox(width: 8),
+                        Text('تعديل'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('حذف'),
+                      ],
+                    ),
+                  ),
+                ],
+                icon: Icon(
+                  Icons.more_vert,
+                  size: 20.w,
+                  color: Colors.grey[600],
+                ),
+                tooltip: 'خيارات المستخدم',
               ),
             ],
           ),
@@ -157,33 +194,33 @@ class UserCard extends StatelessWidget {
     return Icon(
       Icons.person,
       size: 24.w,
-      color: _getRoleColor(user.role.toString()),
+      color: _getRoleColor(user.role),
     );
   }
 
-  Color _getRoleColor(String role) {
+  Color _getRoleColor(UserRole role) {
     switch (role) {
-      case 'super_admin':
+      case UserRole.superAdmin:
         return Colors.purple;
-      case 'cad':
+      case UserRole.cad:
         return Colors.orange;
-      case 'employee':
+      case UserRole.employee:
         return Colors.blue;
       default:
         return Colors.grey;
     }
   }
 
-  String _getRoleDisplayName(String role) {
+  String _getRoleDisplayName(UserRole role) {
     switch (role) {
-      case 'super_admin':
+      case UserRole.superAdmin:
         return 'مدير عام';
-      case 'cad':
+      case UserRole.cad:
         return 'مدير فرع';
-      case 'employee':
+      case UserRole.employee:
         return 'موظف';
       default:
-        return role;
+        return role.toString();
     }
   }
 }

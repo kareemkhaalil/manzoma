@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:huma_plus/core/entities/user_entity.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/entities/user_entity.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:dartz/dartz.dart';
 
-import 'package:huma_plus/features/auth/domain/repositories/auth_repository.dart';
-import 'package:huma_plus/features/auth/domain/usecases/sign_in_usecase.dart';
-import 'package:huma_plus/core/error/failures.dart';
+import 'package:manzoma/features/auth/domain/repositories/auth_repository.dart';
+import 'package:manzoma/features/auth/domain/usecases/sign_in_usecase.dart';
+import 'package:manzoma/core/error/failures.dart';
 
 import 'sign_in_usecase_test.mocks.dart';
 
@@ -50,7 +50,7 @@ void main() {
 
   test('should return failure when sign in fails', () async {
     // arrange
-    const tFailure = AuthFailure(message: 'Invalid credentials');
+    const tFailure = AuthFailure('Invalid credentials');
     when(mockAuthRepository.signIn(
             email: anyNamed('email'), password: anyNamed('password')))
         .thenAnswer((_) async => const Left(tFailure));

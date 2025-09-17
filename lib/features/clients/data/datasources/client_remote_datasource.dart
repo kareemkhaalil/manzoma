@@ -70,15 +70,19 @@ class ClientRemoteDataSourceImpl implements ClientRemoteDataSource {
   @override
   Future<ClientModel> getClientById(String id) async {
     try {
-      final response =
-          await supabaseClient.from('tenants').select().eq('id', id).single();
+      final response = await supabaseClient
+          .from('tenants')
+          .select()
+          .eq('id', id)
+          .maybeSingle();
 
-      return ClientModel.fromJson(response);
+      return ClientModel.fromJson(response!);
     } catch (e) {
       throw ServerException(message: 'Failed to fetch client: $e');
     }
   }
 
+  @override
   @override
   Future<ClientModel> createClient({
     required String name,
@@ -87,9 +91,13 @@ class ClientRemoteDataSourceImpl implements ClientRemoteDataSource {
     required DateTime subscriptionEnd,
     required double billingAmount,
     required String billingInterval,
+    bool isActive = true,
+    int allowedBranches = 1,
+    int allowedUsers = 5,
   }) async {
     try {
       print('Creating client with name: $name, plan: $plan');
+
       final response = await supabaseClient
           .from('tenants')
           .insert({
@@ -99,13 +107,17 @@ class ClientRemoteDataSourceImpl implements ClientRemoteDataSource {
             'subscription_end': subscriptionEnd.toIso8601String(),
             'billing_amount': billingAmount,
             'billing_interval': billingInterval,
-            'is_active': true,
+            'is_active': isActive,
+            'allowed_branches': allowedBranches,
+            'allowed_users': allowedUsers,
+            'current_branches': 0,
+            'current_users': 0,
           })
           .select()
-          .single();
-      print('Client created successfully: $response');
+          .maybeSingle();
 
-      return ClientModel.fromJson(response);
+      print('Client created successfully: $response');
+      return ClientModel.fromJson(response!);
     } catch (e) {
       print('Error creating client: $e');
       throw ServerException(message: 'Failed to create client: $e');
@@ -144,9 +156,9 @@ class ClientRemoteDataSourceImpl implements ClientRemoteDataSource {
           .update(updateData)
           .eq('id', id)
           .select()
-          .single();
+          .maybeSingle();
 
-      return ClientModel.fromJson(response);
+      return ClientModel.fromJson(response!);
     } catch (e) {
       throw ServerException(message: 'Failed to update client: $e');
     }

@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:huma_plus/core/storage/shared_pref_helper.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:manzoma/core/di/injection_container.dart';
+import 'package:manzoma/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/features/clients/domain/usecases/get_clients_usecase.dart';
+import 'package:manzoma/features/dashboard/presentation/cubit/activite_cubit.dart';
+import 'package:manzoma/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:manzoma/features/users/domain/usecases/get_users_usecase.dart';
 import '../../../../shared/widgets/app_sidebar.dart';
 import '../../../../shared/widgets/app_topbar.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
 
 import '../widgets/dashboard_stats.dart';
 import '../widgets/recent_activities.dart';
@@ -18,39 +25,73 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   UserRole _userRole = UserRole.employee; // Default role
 
+  // تعريف الـ Cubits
+  late final DashboardCubit _dashboardCubit;
+  late final ActivityCubit _activityCubit;
+
   @override
   void initState() {
     super.initState();
     _loadUserRole();
+    _dashboardCubit = DashboardCubit(
+      getClientsUseCase: getIt<GetClientsUseCase>(), // <-- حقن من get_it
+      getUsersUseCase: getIt<GetUsersUseCase>(), // <-- حقن من get_it
+    ); // يمكنك حقن الـ UseCases هنا
+    _activityCubit = ActivityCubit();
+
+    // بدء جلب البيانات
+    _dashboardCubit.getStats();
+    _activityCubit.getRecentActivities();
+  }
+
+  @override
+  void dispose() {
+    _dashboardCubit.close();
+    _activityCubit.close();
+    super.dispose();
   }
 
   Future<void> _loadUserRole() async {
-    final user = await SharedPrefHelper.getUser();
+    final user = SharedPrefHelper.getUser();
     print('Loaded user from SharedPref: $user');
     if (user != null) {
       setState(() {
         _userRole = user.role;
       });
+      
+      // إذا كان المستخدم موظف، نوجهه لواجهة الموظفين
+      if (user.role == UserRole.employee) {
+        // استخدام WidgetsBinding لضمان أن التنقل يحدث بعد انتهاء البناء
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.go('/employee/home');
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          // AppSidebar(userRole: _userRole), // Handled in MainAppShell
-          Expanded(
-            child: Column(
-              children: [
-                // AppTopBar(title: 'Dashboard'), // Handled in MainAppShell
-                Expanded(
-                  child: DashboardContent(userRole: _userRole),
-                ),
-              ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _dashboardCubit),
+        BlocProvider.value(value: _activityCubit),
+      ],
+      child: Scaffold(
+        body: Row(
+          children: [
+            // AppSidebar(userRole: _userRole), // Handled in MainAppShell
+            Expanded(
+              child: Column(
+                children: [
+                  // AppTopBar(title: 'Dashboard'), // Handled in MainAppShell
+                  Expanded(
+                    child: DashboardContent(userRole: _userRole),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -72,7 +113,7 @@ class DashboardContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Welcome Section
-          _buildWelcomeSection(),
+          _buildWelcomeSection(context),
           const SizedBox(height: 24),
 
           // Stats Cards
@@ -99,7 +140,7 @@ class DashboardContent extends StatelessWidget {
     );
   }
 
-  Widget _buildWelcomeSection() {
+  Widget _buildWelcomeSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -107,8 +148,8 @@ class DashboardContent extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.blue.shade600,
-            Colors.blue.shade800,
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withOpacity(0.8),
           ],
         ),
         borderRadius: BorderRadius.circular(12),

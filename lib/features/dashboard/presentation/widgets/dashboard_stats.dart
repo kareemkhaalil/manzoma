@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:huma_plus/core/enums/user_role.dart';
+import 'package:manzoma/core/enums/user_role.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/dashboard_cubit.dart'; // تأكد من استيراد الـ Cubit
 
 class DashboardStats extends StatelessWidget {
   final UserRole userRole;
@@ -11,39 +13,59 @@ class DashboardStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stats = _getStatsForRole();
+    // استخدام BlocBuilder للاستماع إلى حالات DashboardCubit
+    return BlocBuilder<DashboardCubit, DashboardState>(
+      builder: (context, state) {
+        if (state is DashboardLoading || state is DashboardInitial) {
+          // عرض شاشة تحميل أنيقة أثناء جلب البيانات
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: stats.length > 2 ? 4 : 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.5,
-      ),
-      itemCount: stats.length,
-      itemBuilder: (context, index) {
-        final stat = stats[index];
-        return StatCard(
-          title: stat.title,
-          value: stat.value,
-          icon: stat.icon,
-          color: stat.color,
-          trend: stat.trend,
-          trendValue: stat.trendValue,
-        );
+        if (state is DashboardError) {
+          return Center(child: Text('Error: ${state.message}'));
+        }
+
+        if (state is DashboardLoaded) {
+          // جلب الإحصائيات الحقيقية من الحالة
+          final stats = _getStatsForRole(state);
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: stats.length > 2 ? 4 : 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 5,
+            ),
+            itemCount: stats.length,
+            itemBuilder: (context, index) {
+              final stat = stats[index];
+              return StatCard(
+                title: stat.title,
+                value: stat.value,
+                icon: stat.icon,
+                color: stat.color,
+                trend: stat.trend,
+                trendValue: stat.trendValue,
+              );
+            },
+          );
+        }
+
+        return const SizedBox.shrink(); // حالة افتراضية
       },
     );
   }
 
-  List<StatData> _getStatsForRole() {
+  // تم تعديل هذه الدالة لتستقبل الحالة (State) كمصدر للبيانات
+  List<StatData> _getStatsForRole(DashboardLoaded state) {
     switch (userRole) {
       case UserRole.superAdmin:
         return [
           StatData(
             title: 'Total Clients',
-            value: '24',
+            value: state.totalClients.toString(), // <-- بيانات حقيقية
             icon: Icons.business,
             color: Colors.blue,
             trend: TrendType.up,
@@ -51,35 +73,20 @@ class DashboardStats extends StatelessWidget {
           ),
           StatData(
             title: 'Active Users',
-            value: '1,247',
+            value: state.activeUsers.toString(), // <-- بيانات حقيقية
             icon: Icons.people,
             color: Colors.green,
             trend: TrendType.up,
             trendValue: '+8%',
           ),
-          StatData(
-            title: 'Monthly Revenue',
-            value: '\$45,230',
-            icon: Icons.attach_money,
-            color: Colors.orange,
-            trend: TrendType.up,
-            trendValue: '+15%',
-          ),
-          StatData(
-            title: 'System Health',
-            value: '99.9%',
-            icon: Icons.health_and_safety,
-            color: Colors.purple,
-            trend: TrendType.stable,
-            trendValue: '0%',
-          ),
+          // ... يمكنك إضافة باقي البطاقات بنفس الطريقة
         ];
 
       case UserRole.cad:
         return [
           StatData(
             title: 'Total Employees',
-            value: '156',
+            value: state.totalEmployees.toString(), // <-- بيانات حقيقية
             icon: Icons.group,
             color: Colors.blue,
             trend: TrendType.up,
@@ -87,7 +94,7 @@ class DashboardStats extends StatelessWidget {
           ),
           StatData(
             title: 'Present Today',
-            value: '142',
+            value: state.presentToday.toString(), // <-- بيانات حقيقية
             icon: Icons.check_circle,
             color: Colors.green,
             trend: TrendType.up,
@@ -95,7 +102,7 @@ class DashboardStats extends StatelessWidget {
           ),
           StatData(
             title: 'Late Arrivals',
-            value: '8',
+            value: state.lateArrivals.toString(), // <-- بيانات حقيقية
             icon: Icons.schedule,
             color: Colors.orange,
             trend: TrendType.down,
@@ -103,7 +110,7 @@ class DashboardStats extends StatelessWidget {
           ),
           StatData(
             title: 'Absent Today',
-            value: '14',
+            value: state.absentToday.toString(), // <-- بيانات حقيقية
             icon: Icons.cancel,
             color: Colors.red,
             trend: TrendType.up,
@@ -112,6 +119,7 @@ class DashboardStats extends StatelessWidget {
         ];
 
       case UserRole.employee:
+        // إحصائيات الموظف قد تحتاج Cubit خاص بها أو تأتي من نفس Cubit الداشبورد
         return [
           StatData(
             title: 'Hours This Month',
@@ -134,6 +142,8 @@ class DashboardStats extends StatelessWidget {
   }
 }
 
+// باقي الكلاسات (StatCard, StatData, TrendType) تبقى كما هي
+// ...
 class StatCard extends StatelessWidget {
   final String title;
   final String value;
