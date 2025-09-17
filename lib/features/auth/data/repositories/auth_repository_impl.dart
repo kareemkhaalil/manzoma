@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:manzoma/features/auth/data/models/user_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
@@ -30,18 +31,17 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(user);
       } on AuthException catch (e) {
         return Left(AuthFailure(
-          message: e.message,
-          code: e.code,
+          e.message,
         ));
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          e.message,
           statusCode: e.statusCode,
         ));
       }
     } else {
       return const Left(NetworkFailure(
-        message: 'لا يوجد اتصال بالإنترنت',
+        'لا يوجد اتصال بالإنترنت',
       ));
     }
   }
@@ -64,18 +64,17 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(user);
       } on AuthException catch (e) {
         return Left(AuthFailure(
-          message: e.message,
-          code: e.code,
+          e.message,
         ));
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          e.message,
           statusCode: e.statusCode,
         ));
       }
     } else {
       return const Left(NetworkFailure(
-        message: 'لا يوجد اتصال بالإنترنت',
+        'لا يوجد اتصال بالإنترنت',
       ));
     }
   }
@@ -88,18 +87,17 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Right(null);
       } on AuthException catch (e) {
         return Left(AuthFailure(
-          message: e.message,
-          code: e.code,
+          e.message,
         ));
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          e.message,
           statusCode: e.statusCode,
         ));
       }
     } else {
       return const Left(NetworkFailure(
-        message: 'لا يوجد اتصال بالإنترنت',
+        'لا يوجد اتصال بالإنترنت',
       ));
     }
   }
@@ -112,13 +110,13 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(user);
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          e.message,
           statusCode: e.statusCode,
         ));
       }
     } else {
       return const Left(NetworkFailure(
-        message: 'لا يوجد اتصال بالإنترنت',
+        'لا يوجد اتصال بالإنترنت',
       ));
     }
   }
@@ -141,13 +139,13 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(user);
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          e.message,
           statusCode: e.statusCode,
         ));
       }
     } else {
       return const Left(NetworkFailure(
-        message: 'لا يوجد اتصال بالإنترنت',
+        'لا يوجد اتصال بالإنترنت',
       ));
     }
   }
@@ -160,18 +158,17 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Right(null);
       } on AuthException catch (e) {
         return Left(AuthFailure(
-          message: e.message,
-          code: e.code,
+          e.message,
         ));
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          e.message,
           statusCode: e.statusCode,
         ));
       }
     } else {
       return const Left(NetworkFailure(
-        message: 'لا يوجد اتصال بالإنترنت',
+        'لا يوجد اتصال بالإنترنت',
       ));
     }
   }

@@ -1,7 +1,7 @@
 import 'package:manzoma/core/enums/user_role.dart';
 import 'package:manzoma/core/storage/shared_pref_helper.dart';
 import 'package:manzoma/features/auth/domain/entities/user_entity.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/supabase_client.dart';
 import '../models/user_model.dart';
@@ -52,7 +52,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       if (response.user == null) {
         throw const AuthException(
-            message: 'فشل في تسجيل الدخول: بيانات المستخدم غير موجودة');
+            'فشل في تسجيل الدخول: بيانات المستخدم غير موجودة');
       }
 
       // Fetch user profile from the users table
@@ -64,7 +64,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       // Check if profile exists
       if (profileResponse == null) {
-        throw const ServerException(
+        throw ServerException(
           message: 'لم يتم العثور على ملف المستخدم في قاعدة البيانات',
         );
       }
@@ -129,7 +129,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.user == null) {
-        throw const AuthException(message: 'فشل في إنشاء الحساب');
+        throw const AuthException('فشل في إنشاء الحساب');
       }
 
       // Create user profile
@@ -179,12 +179,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           .from('users_view')
           .select()
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
       return UserModel.fromJson({
         'id': user.id,
         'email': user.email!,
-        ...profileResponse,
+        ...?profileResponse,
       });
     } on PostgrestException catch (e) {
       throw ServerException(
@@ -217,9 +217,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           .update(updateData)
           .eq('id', userId)
           .select()
-          .single();
+          .maybeSingle();
 
-      return UserModel.fromJson(response);
+      return UserModel.fromJson(response!);
     } on PostgrestException catch (e) {
       throw ServerException(
         message: e.message,
