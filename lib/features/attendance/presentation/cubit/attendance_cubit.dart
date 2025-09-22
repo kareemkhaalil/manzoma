@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:manzoma/features/attendance/domain/usecases/check_in_with_qr_usecase.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../domain/usecases/check_in_usecase.dart';
 import '../../domain/usecases/check_out_usecase.dart';
@@ -7,6 +8,8 @@ import 'attendance_state.dart';
 
 class AttendanceCubit extends Cubit<AttendanceState> {
   final CheckInUseCase _checkInUseCase;
+  final CheckInWithQrUseCase _checkInWithQrUseCase;
+
   final CheckOutUseCase _checkOutUseCase;
   final GetAttendanceHistoryUseCase _getAttendanceHistoryUseCase;
 
@@ -15,11 +18,15 @@ class AttendanceCubit extends Cubit<AttendanceState> {
 
   AttendanceCubit({
     CheckInUseCase? checkInUseCase,
+    CheckInWithQrUseCase? checkInWithQrUseCase,
     CheckOutUseCase? checkOutUseCase,
     GetAttendanceHistoryUseCase? getAttendanceHistoryUseCase,
   })  : _checkInUseCase = checkInUseCase ?? sl<CheckInUseCase>(),
+        _checkInWithQrUseCase =
+            checkInWithQrUseCase ?? sl<CheckInWithQrUseCase>(),
         _checkOutUseCase = checkOutUseCase ?? sl<CheckOutUseCase>(),
-        _getAttendanceHistoryUseCase = getAttendanceHistoryUseCase ?? sl<GetAttendanceHistoryUseCase>(),
+        _getAttendanceHistoryUseCase =
+            getAttendanceHistoryUseCase ?? sl<GetAttendanceHistoryUseCase>(),
         super(AttendanceInitial());
 
   Future<void> checkIn({
@@ -28,7 +35,7 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     String? notes,
   }) async {
     emit(AttendanceLoading());
-    
+
     final result = await _checkInUseCase(
       CheckInParams(
         userId: userId,
@@ -36,7 +43,24 @@ class AttendanceCubit extends Cubit<AttendanceState> {
         notes: notes,
       ),
     );
-    
+
+    result.fold(
+      (failure) => emit(AttendanceError(message: failure.message)),
+      (attendance) => emit(AttendanceCheckInSuccess(attendance: attendance)),
+    );
+  }
+
+  Future<void> checkInWithQr({
+    required String token,
+    required double lat,
+    required double lng,
+  }) async {
+    emit(AttendanceLoading());
+
+    final result = await _checkInWithQrUseCase(
+      CheckInWithQrParams(token: token, lat: lat, lng: lng),
+    );
+
     result.fold(
       (failure) => emit(AttendanceError(message: failure.message)),
       (attendance) => emit(AttendanceCheckInSuccess(attendance: attendance)),
@@ -48,14 +72,14 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     String? notes,
   }) async {
     emit(AttendanceLoading());
-    
+
     final result = await _checkOutUseCase(
       CheckOutParams(
         attendanceId: attendanceId,
         notes: notes,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(AttendanceError(message: failure.message)),
       (attendance) => emit(AttendanceCheckOutSuccess(attendance: attendance)),
@@ -75,7 +99,7 @@ class AttendanceCubit extends Cubit<AttendanceState> {
       final currentState = state as AttendanceHistoryLoaded;
       if (currentState.hasReachedMax) return;
     }
-    
+
     final result = await _getAttendanceHistoryUseCase(
       GetAttendanceHistoryParams(
         userId: userId,
@@ -85,7 +109,7 @@ class AttendanceCubit extends Cubit<AttendanceState> {
         offset: _currentOffset,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(AttendanceError(message: failure.message)),
       (newAttendanceList) {
@@ -96,7 +120,7 @@ class AttendanceCubit extends Cubit<AttendanceState> {
           final currentState = state as AttendanceHistoryLoaded;
           final updatedList = List.of(currentState.attendanceList)
             ..addAll(newAttendanceList);
-          
+
           emit(AttendanceHistoryLoaded(
             attendanceList: updatedList,
             hasReachedMax: hasReachedMax,
@@ -116,4 +140,3 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     emit(AttendanceInitial());
   }
 }
-

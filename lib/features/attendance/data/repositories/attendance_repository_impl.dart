@@ -43,6 +43,31 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   }
 
   @override
+  Future<Either<Failure, AttendanceEntity>> checkInWithQr({
+    required String token,
+    required double lat,
+    required double lng,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final attendance = await remoteDataSource.checkInWithQr(
+          token: token,
+          lat: lat,
+          lng: lng,
+        );
+        return Right(attendance);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(
+          message: e.message,
+          statusCode: e.statusCode,
+        ));
+      }
+    } else {
+      return const Left(NetworkFailure(message: 'لا يوجد اتصال بالإنترنت'));
+    }
+  }
+
+  @override
   Future<Either<Failure, AttendanceEntity>> checkOut({
     required String attendanceId,
     String? notes,
@@ -179,4 +204,3 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     }
   }
 }
-

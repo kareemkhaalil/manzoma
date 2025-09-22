@@ -1,4 +1,5 @@
 import 'package:manzoma/core/location/location_helper.dart';
+import 'package:manzoma/features/attendance/domain/entities/attendance_entity.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/attendance_model.dart';
@@ -36,6 +37,11 @@ abstract class AttendanceRemoteDataSource {
     DateTime? checkOutTime,
     String? status,
     String? notes,
+  });
+  Future<AttendanceModel> checkInWithQr({
+    required String token,
+    required double lat,
+    required double lng,
   });
 
   Future<void> deleteAttendance({required String attendanceId});
@@ -157,6 +163,42 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
       print("Error occurred while checking in datasource: ${e.toString()}");
       throw ServerException(message: e.toString());
     }
+  }
+
+  @override
+  Future<AttendanceModel> checkInWithQr({
+    // required String userId, // userId is now handled within the RPC function
+    required String token,
+    required double lat,
+    required double lng,
+  }) async {
+    final res = await supabaseClient.rpc('verify_qr_and_checkin', params: {
+      'p_token': token,
+      'p_lat': lat,
+      'p_lng': lng,
+    });
+
+    if (res.error != null) {
+      throw ServerException(message: res.error!.message);
+    }
+
+    final data = res.data as List;
+    if (data.isEmpty) throw const ServerException(message: 'No response');
+
+    final row = data.first;
+    if (row['success'] == false) {
+      throw ServerException(message: row['message']);
+    }
+
+    // لو عندك model مخصص لـ attendance ممكن تبنيه من هنا
+    return AttendanceModel(
+      id: '', // supabase ممكن يرجع الـ id من attendance لو عدلنا الـ function
+      userId: '', // This will be updated once the RPC returns the user_id
+      checkInTime: DateTime.now(),
+      method: 'qr', date: DateTime.now(), status: AttendanceStatus.present,
+      checkOutTime: DateTime.now(),
+      createdAt: DateTime.now(), updatedAt: DateTime.now(),
+    );
   }
 
   @override

@@ -14,6 +14,7 @@ class AttendanceEntity extends Equatable {
   final DateTime? checkInTime;
   final DateTime? checkOutTime;
   final AttendanceStatus status;
+  final String? method;
   final int? workingHours;
   final int? overtimeHours;
   final String? notes;
@@ -28,6 +29,7 @@ class AttendanceEntity extends Equatable {
     this.checkInTime,
     this.checkOutTime,
     required this.status,
+    this.method,
     this.workingHours,
     this.overtimeHours,
     this.notes,
@@ -44,6 +46,7 @@ class AttendanceEntity extends Equatable {
         checkInTime,
         checkOutTime,
         status,
+        method,
         workingHours,
         overtimeHours,
         notes,
