@@ -178,6 +178,37 @@ class QuickActions extends StatelessWidget {
             route: '/payroll',
           ),
         ];
+      case UserRole.branchManager:
+        return [
+          QuickActionData(
+            title: 'Add Employee',
+            subtitle: 'Register new team member',
+            icon: Icons.person_add,
+            color: Colors.blue,
+            route: '/users/create',
+          ),
+          QuickActionData(
+            title: 'Add Branch',
+            subtitle: 'Register new branch',
+            icon: Icons.business,
+            color: Colors.green,
+            route: '/branches/create',
+          ),
+          QuickActionData(
+            title: 'Attendance Report',
+            subtitle: 'View team attendance',
+            icon: Icons.schedule,
+            color: Colors.orange,
+            route: '/reports',
+          ),
+          QuickActionData(
+            title: 'Payroll Processing',
+            subtitle: 'Process monthly payroll',
+            icon: Icons.payment,
+            color: Colors.purple,
+            route: '/payroll',
+          ),
+        ];
 
       case UserRole.employee:
         return [

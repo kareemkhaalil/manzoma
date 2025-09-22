@@ -117,6 +117,41 @@ class DashboardStats extends StatelessWidget {
             trendValue: '+1',
           ),
         ];
+      case UserRole.branchManager:
+        return [
+          StatData(
+            title: 'Total Employees',
+            value: state.totalEmployees.toString(), // <-- بيانات حقيقية
+            icon: Icons.group,
+            color: Colors.blue,
+            trend: TrendType.up,
+            trendValue: '+3',
+          ),
+          StatData(
+            title: 'Present Today',
+            value: state.presentToday.toString(), // <-- بيانات حقيقية
+            icon: Icons.check_circle,
+            color: Colors.green,
+            trend: TrendType.up,
+            trendValue: '91%',
+          ),
+          StatData(
+            title: 'Late Arrivals',
+            value: state.lateArrivals.toString(), // <-- بيانات حقيقية
+            icon: Icons.schedule,
+            color: Colors.orange,
+            trend: TrendType.down,
+            trendValue: '-2',
+          ),
+          StatData(
+            title: 'Absent Today',
+            value: state.absentToday.toString(), // <-- بيانات حقيقية
+            icon: Icons.cancel,
+            color: Colors.red,
+            trend: TrendType.up,
+            trendValue: '+1',
+          ),
+        ];
 
       case UserRole.employee:
         // إحصائيات الموظف قد تحتاج Cubit خاص بها أو تأتي من نفس Cubit الداشبورد

@@ -22,6 +22,12 @@ UserRole parseUserRole(dynamic rawRole) {
     case 'company-admin':
       return UserRole.cad;
 
+    case 'branchmanager':
+    case 'branchManager':
+    case 'branch_manager':
+    case 'branch-manager':
+      return UserRole.branchManager;
+
     case 'employee':
     case 'staff':
     case 'user':
