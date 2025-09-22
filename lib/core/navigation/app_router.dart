@@ -48,15 +48,31 @@ class AppRouter {
       final role = user?.role ?? UserRole.employee;
       final loc = state.matchedLocation;
 
-      if (loc == RouteNames.clients && role != UserRole.superAdmin) {
-        return RouteNames.dashboard;
+      // حماية كل مسارات العملاء (Super Admin فقط)
+      if (role != UserRole.superAdmin) {
+        if (loc == RouteNames.clients ||
+            loc == RouteNames.createClient ||
+            loc.startsWith('/clients/')) {
+          return RouteNames.dashboard;
+        }
       }
-      if ((loc == RouteNames.branches ||
-              loc == RouteNames.users ||
-              loc == RouteNames.reports) &&
-          role == UserRole.employee) {
-        return RouteNames.dashboard;
+
+      // حماية للموظف: يمنع الدخول للفروع/المستخدمين/التقارير (بما فيها الإنشاء/التعديل)
+      if (role == UserRole.employee) {
+        final restrictedForEmployee = <String>{
+          RouteNames.branches,
+          RouteNames.createBranch,
+          RouteNames.users,
+          RouteNames.createUser,
+          RouteNames.reports,
+        };
+        if (restrictedForEmployee.contains(loc) ||
+            loc == '/branches/edit' ||
+            loc == '/users/edit') {
+          return RouteNames.dashboard;
+        }
       }
+
       return null;
     },
     routes: [
@@ -70,6 +86,7 @@ class AppRouter {
         name: 'login',
         builder: (context, state) => const LoginScreen(),
       ),
+
       // Dashboard Routes
       GoRoute(
         path: RouteNames.dashboard,
@@ -99,7 +116,6 @@ class AppRouter {
         builder: (context, state) =>
             const MainAppShell(child: PayrollRulesScreen()),
       ),
-
       GoRoute(
         path: RouteNames.employeeSalary,
         name: 'employeeSalary',
@@ -116,7 +132,16 @@ class AppRouter {
       GoRoute(
         path: RouteNames.createClient,
         name: 'createClient',
-        builder: (context, state) => const ClientsCreateScreen(),
+        builder: (context, state) =>
+            const MainAppShell(child: ClientsCreateScreen()),
+      ),
+      GoRoute(
+        path: '/clients/:id/edit',
+        name: 'editClient',
+        builder: (context, state) {
+          final client = state.extra; // مرر الـ client كـ extra
+          return MainAppShell(child: ClientsCreateScreen(client: client));
+        },
       ),
 
       // Users Routes (Super Admin & CAD only)
@@ -169,14 +194,14 @@ class AppRouter {
         builder: (context, state) => const MainAppShell(child: ReportsScreen()),
       ),
 
+      // Employee app
       GoRoute(
         path: "/employee/home",
         builder: (context, state) => const EmployeeHomeScreen(),
       ),
       GoRoute(
         path: "/employee/attendance",
-        builder: (context, state) =>
-            const AttendanceEmployeeScreen(), // هنضيفها كمان
+        builder: (context, state) => const AttendanceEmployeeScreen(),
       ),
     ],
   );
@@ -241,9 +266,7 @@ class _MainAppShellState extends State<MainAppShell> {
         return Scaffold(
           body: Row(
             children: [
-              if (isEnglish.isNotEmpty)
-                // if (isEnglish == 'en') const
-                const AppSidebar(isMobile: false),
+              if (isEnglish.isNotEmpty) const AppSidebar(isMobile: false),
               Expanded(
                 child: Column(
                   children: [
@@ -252,7 +275,6 @@ class _MainAppShellState extends State<MainAppShell> {
                   ],
                 ),
               ),
-              // if (isEnglish == 'ar') const AppSidebar(isMobile: false),
             ],
           ),
         );

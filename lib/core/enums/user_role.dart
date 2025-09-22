@@ -1,5 +1,5 @@
 // lib/core/enums/user_role.dart
-enum UserRole { superAdmin, cad, employee }
+enum UserRole { superAdmin, cad, branchManager, employee }
 
 extension UserRoleX on UserRole {
   String toValue() {
@@ -10,6 +10,8 @@ extension UserRoleX on UserRole {
         return 'cad';
       case UserRole.employee:
         return 'employee';
+      case UserRole.branchManager:
+        return 'branchManager';
     }
   }
 
@@ -21,6 +23,8 @@ extension UserRoleX on UserRole {
         return UserRole.cad;
       case 'employee':
         return UserRole.employee;
+      case 'branchManager':
+        return UserRole.branchManager;
       default:
         // Fallback آمن
         return UserRole.employee;

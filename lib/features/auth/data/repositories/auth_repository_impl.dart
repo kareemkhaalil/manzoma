@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
+import 'package:manzoma/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:manzoma/features/auth/data/models/user_model.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
 import 'package:manzoma/core/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../datasources/auth_remote_datasource.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -30,12 +30,12 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(user);
       } on AuthException catch (e) {
         return Left(AuthFailure(
-          message: e.message,
+          message: e.message.isNotEmpty ? e.message : 'فشل تسجيل الدخول',
           code: e.code,
         ));
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          message: e.message.isNotEmpty ? e.message : 'خطأ في الخادم',
           statusCode: e.statusCode,
         ));
       }
@@ -64,12 +64,12 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(user);
       } on AuthException catch (e) {
         return Left(AuthFailure(
-          message: e.message,
+          message: e.message.isNotEmpty ? e.message : 'فشل إنشاء الحساب',
           code: e.code,
         ));
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          message: e.message.isNotEmpty ? e.message : 'خطأ في الخادم',
           statusCode: e.statusCode,
         ));
       }
@@ -81,19 +81,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> signOut() async {
+  Future<Either<Failure, Unit>> signOut() async {
     if (await networkInfo.isConnected) {
       try {
         await remoteDataSource.signOut();
-        return const Right(null);
+        return const Right(unit);
       } on AuthException catch (e) {
         return Left(AuthFailure(
-          message: e.message,
+          message: e.message.isNotEmpty ? e.message : 'فشل تسجيل الخروج',
           code: e.code,
         ));
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          message: e.message.isNotEmpty ? e.message : 'خطأ في الخادم',
           statusCode: e.statusCode,
         ));
       }
@@ -105,14 +105,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserModel?>> getCurrentUser() async {
+  Future<Either<Failure, UserEntity?>> getCurrentUser() async {
     if (await networkInfo.isConnected) {
       try {
         final user = await remoteDataSource.getCurrentUser();
         return Right(user);
+      } on AuthException catch (e) {
+        return Left(AuthFailure(
+          message: e.message.isNotEmpty ? e.message : 'جلسة المستخدم غير صالحة',
+          code: e.code,
+        ));
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          message: e.message.isNotEmpty ? e.message : 'خطأ في الخادم',
           statusCode: e.statusCode,
         ));
       }
@@ -141,7 +146,7 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(user);
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          message: e.message.isNotEmpty ? e.message : 'فشل تحديث الملف الشخصي',
           statusCode: e.statusCode,
         ));
       }
@@ -153,19 +158,20 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> resetPassword({required String email}) async {
+  Future<Either<Failure, Unit>> resetPassword({required String email}) async {
     if (await networkInfo.isConnected) {
       try {
         await remoteDataSource.resetPassword(email: email);
-        return const Right(null);
+        return const Right(unit);
       } on AuthException catch (e) {
         return Left(AuthFailure(
-          message: e.message,
+          message:
+              e.message.isNotEmpty ? e.message : 'فشل إعادة تعيين كلمة المرور',
           code: e.code,
         ));
       } on ServerException catch (e) {
         return Left(ServerFailure(
-          message: e.message,
+          message: e.message.isNotEmpty ? e.message : 'خطأ في الخادم',
           statusCode: e.statusCode,
         ));
       }
