@@ -44,51 +44,47 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String password,
   }) async {
     try {
-      // Sign in with Supabase Auth
       final response = await supabaseClient.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
       if (response.user == null) {
+
         throw const AuthException(
             'فشل في تسجيل الدخول: بيانات المستخدم غير موجودة');
+
       }
 
-      // Fetch user profile from the users table
       final profileResponse = await supabaseClient
           .from('users')
           .select()
           .eq('id', response.user!.id)
           .maybeSingle();
 
-      // Check if profile exists
       if (profileResponse == null) {
+
         throw ServerException(
           message: 'لم يتم العثور على ملف المستخدم في قاعدة البيانات',
         );
+
       }
 
-      print('Profile from DB: $profileResponse');
+      final roleEnum = UserRoleX.fromValue(
+        profileResponse['role'] as String? ?? 'employee',
+      );
 
-      // Parse role safely
-      final roleEnum =
-          UserRoleX.fromValue(profileResponse['role'] as String? ?? 'employee');
-      print('Role enum: $roleEnum');
-
-      // Create user model
-      final map = <String, dynamic>{
+      final map = {
         'id': response.user!.id,
         'email': response.user?.email ?? '',
         'tenant_id': profileResponse['tenant_id'] as String? ?? '',
         'branch_id': profileResponse['branch_id'] as String?,
         'role': roleEnum.toValue(),
-        'name':
-            profileResponse['name'] as String? ?? response.user?.email ?? '',
+        'name': profileResponse['name'] as String? ?? '',
         'phone': profileResponse['phone'] as String?,
         'avatar': profileResponse['avatar'] as String?,
         'is_active': profileResponse['is_active'] as bool? ?? true,
-        'base_salary': profileResponse['base_salary'] != null
+        'base_salary': (profileResponse['base_salary'] != null)
             ? double.tryParse(profileResponse['base_salary'].toString()) ?? 0.0
             : 0.0,
         'allowances':
@@ -104,14 +100,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final loggedInUser = UserModel.fromJson(map);
       await SharedPrefHelper.saveUser(loggedInUser);
-
       return loggedInUser;
     } on PostgrestException catch (e) {
-      print('PostgrestException: ${e.message}');
       throw ServerException(message: e.message);
-    } catch (e) {
-      print('General error: $e');
-      throw ServerException(message: e.toString());
     }
   }
 
@@ -129,15 +120,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.user == null) {
+
         throw const AuthException('فشل في إنشاء الحساب');
+
       }
 
-      // Create user profile
-      await supabaseClient.from('profiles').insert({
+      await supabaseClient.from('users').insert({
         'id': response.user!.id,
+        'email': email,
         'name': name,
         'role': role,
-        'email': email,
+        'tenant_id': null,
+        'branch_id': null,
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       });
@@ -147,16 +141,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'email': email,
         'name': name,
         'role': role,
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
       });
     } on PostgrestException catch (e) {
       throw ServerException(
         message: e.message,
-        statusCode: e.code != null ? int.tryParse(e.code!) : null,
+        statusCode: int.tryParse(e.code ?? ''),
       );
-    } catch (e) {
-      throw ServerException(message: e.toString());
     }
   }
 
@@ -164,6 +154,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> signOut() async {
     try {
       await supabaseClient.auth.signOut();
+      await SharedPrefHelper.clearUser();
     } catch (e) {
       throw ServerException(message: e.toString());
     }
@@ -176,23 +167,28 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (user == null) return null;
 
       final profileResponse = await supabaseClient
-          .from('users_view')
+          .from('users')
           .select()
           .eq('id', user.id)
           .maybeSingle();
 
+
+      if (profileResponse == null) {
+        throw const AuthException(
+          message: 'جلسة غير صالحة: لم يتم العثور على المستخدم',
+        );
+      }
+
       return UserModel.fromJson({
         'id': user.id,
-        'email': user.email!,
-        ...?profileResponse,
+        'email': user.email ?? '',
+        ...profileResponse,
+
+
+
       });
     } on PostgrestException catch (e) {
-      throw ServerException(
-        message: e.message,
-        statusCode: e.code != null ? int.tryParse(e.code!) : null,
-      );
-    } catch (e) {
-      throw ServerException(message: e.toString());
+      throw ServerException(message: e.message);
     }
   }
 
@@ -207,26 +203,26 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final updateData = <String, dynamic>{
         'updated_at': DateTime.now().toIso8601String(),
       };
-
       if (name != null) updateData['name'] = name;
       if (phone != null) updateData['phone'] = phone;
       if (avatar != null) updateData['avatar'] = avatar;
 
       final response = await supabaseClient
-          .from('profiles')
+          .from('users')
           .update(updateData)
           .eq('id', userId)
           .select()
           .maybeSingle();
 
+
+      if (response == null) {
+        throw const ServerException(message: 'لم يتم تحديث المستخدم');
+      }
+
+
       return UserModel.fromJson(response!);
     } on PostgrestException catch (e) {
-      throw ServerException(
-        message: e.message,
-        statusCode: e.code != null ? int.tryParse(e.code!) : null,
-      );
-    } catch (e) {
-      throw ServerException(message: e.toString());
+      throw ServerException(message: e.message);
     }
   }
 

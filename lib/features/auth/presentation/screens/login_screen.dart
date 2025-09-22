@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manzoma/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:manzoma/features/auth/presentation/cubit/auth_state.dart';
-import '../../../../shared/widgets/custom_button.dart';
-import '../../../../shared/widgets/custom_input.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -12,12 +10,10 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AuthCubit(),
+      create: (_) => AuthCubit(),
       child: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            // بدلاً من التنقل المباشر، نروح على الداشبورد دايماً
-            // والداشبورد هيتولى توجيه المستخدم للواجهة المناسبة
             context.go('/dashboard');
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -29,7 +25,18 @@ class LoginScreen extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          return const LoginView();
+          return Stack(
+            children: [
+              const LoginView(),
+              if (state is AuthLoading)
+                Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                ),
+            ],
+          );
         },
       ),
     );
@@ -43,15 +50,53 @@ class LoginView extends StatefulWidget {
   State<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
+class _LoginViewState extends State<LoginView>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+
+  late AnimationController _animController;
+  late Animation<Offset> _slideIn;
+  late Animation<double> _fadeIn;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    _slideIn = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
+    );
+
+    _fadeIn = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeIn,
+    );
+
+    _animController.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ⚡ تحميل الصور مسبقًا (من غير لاج)
+    precacheImage(const AssetImage("assets/images/Asset 1.png"), context);
+    precacheImage(const AssetImage("assets/images/patternBlue.png"), context);
+  }
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
@@ -61,57 +106,35 @@ class _LoginViewState extends State<LoginView> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isMobile = constraints.maxWidth < 768;
-          
-          if (isMobile) {
-            // Mobile Layout - Single Column
-            return _buildMobileLayout(context);
-          } else {
-            // Desktop Layout - Two Columns
-            return _buildDesktopLayout(context);
-          }
+          return isMobile ? _buildMobile(context) : _buildDesktop(context);
         },
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context) {
+  // ----- Mobile Layout -----
+  Widget _buildMobile(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
-            
-            // Logo Section
-            Image.asset(
-              'assets/images/Asset 1.png',
-              width: 200,
-              height: 120,
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: FadeTransition(
+            opacity: _fadeIn,
+            child: SlideTransition(
+              position: _slideIn,
+              child: _loginCard(context, isMobile: true),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Smart Attendance & Payroll Management',
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            
-            const SizedBox(height: 40),
-            
-            // Login Form
-            _buildLoginForm(context, isMobile: true),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context) {
+  // ----- Desktop Layout -----
+  Widget _buildDesktop(BuildContext context) {
     return Row(
       children: [
-        // Left Side - Branding
+        // Background side
         Expanded(
           flex: 1,
           child: Stack(
@@ -121,48 +144,32 @@ class _LoginViewState extends State<LoginView> {
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
-                opacity: const AlwaysStoppedAnimation(0.1),
-                filterQuality: FilterQuality.low,
+                opacity: const AlwaysStoppedAnimation(0.08),
               ),
-              Container(
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/Asset 1.png',
-                        width: 300,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Smart Attendance & Payroll Management',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+              Center(
+                child: Hero(
+                  tag: "logo",
+                  child: Image.asset(
+                    "assets/images/Asset 1.png",
+                    width: 280,
                   ),
                 ),
               ),
             ],
           ),
         ),
-
-        // Right Side - Login Form
+        // Form side
         Expanded(
           flex: 1,
-          child: Container(
-            padding: const EdgeInsets.all(48),
-            color: Theme.of(context).primaryColorDark,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 400),
-                child: _buildLoginForm(context, isMobile: false),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: SlideTransition(
+                position: _slideIn,
+                child: FadeTransition(
+                  opacity: _fadeIn,
+                  child: _loginCard(context, isMobile: false),
+                ),
               ),
             ),
           ),
@@ -171,170 +178,134 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  Widget _buildLoginForm(BuildContext context, {required bool isMobile}) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Welcome Back',
-            style: TextStyle(
-              fontSize: isMobile ? 28 : 32,
-              fontWeight: FontWeight.bold,
-              color: isMobile ? Theme.of(context).textTheme.headlineLarge?.color : Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Sign in to your account',
-            style: TextStyle(
-              fontSize: 16,
-              color: isMobile ? Theme.of(context).textTheme.bodyMedium?.color : Colors.grey.shade200,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: isMobile ? 32 : 48),
-
-          // Email Field
-          CustomInput(
-            controller: _emailController,
-            label: 'Email',
-            hintText: 'Enter your email',
-            labelColor: isMobile ? null : Colors.grey.shade200,
-            prefixIcon: Icons.email_outlined,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                  .hasMatch(value)) {
-                return 'Please enter a valid email';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 24),
-
-          // Password Field
-          CustomInput(
-            controller: _passwordController,
-            label: 'Password',
-            hintText: 'Enter your password',
-            labelColor: isMobile ? null : Colors.grey.shade200,
-            prefixIcon: Icons.lock_outlined,
-            isPassword: true,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your password';
-              }
-              if (value.length < 6) {
-                return 'Password must be at least 6 characters';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Forgot Password
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                // Handle forgot password
-              },
-              child: const Text('Forgot Password?'),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // Login Button
-          BlocBuilder<AuthCubit, AuthState>(
-            builder: (context, state) {
-              return CustomButton(
-                text: 'Sign In',
-                isLoading: state is AuthLoading,
-                backgroundColor: const Color(0xff222DFF),
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    context.read<AuthCubit>().signIn(
-                          email: _emailController.text,
-                          password: _passwordController.text,
-                        );
-                  }
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-
-          // Demo Login Buttons
-          const Divider(),
-          const SizedBox(height: 16),
-          Text(
-            'Demo Accounts',
-            style: TextStyle(
-              fontSize: 14,
-              color: isMobile ? Theme.of(context).textTheme.bodySmall?.color : Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-
-          // Demo buttons layout based on screen size
-          isMobile 
-            ? Column(
+  // ----- Login Form card -----
+  Widget _loginCard(BuildContext context, {required bool isMobile}) {
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Hero(
+                tag: "logo",
+                child: Image.asset("assets/images/Asset 1.png", width: 140),
+              ),
+              const SizedBox(height: 15),
+              Text(
+                "Welcome Back 👋",
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade800,
+                    ),
+              ),
+              const SizedBox(height: 25),
+              TextFormField(
+                controller: _emailCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Email",
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+                validator: (v) =>
+                    v == null || !v.contains("@") ? "Enter valid email" : null,
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _passCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: "Password",
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
+                validator: (v) =>
+                    v != null && v.length < 6 ? "Min 6 characters" : null,
+              ),
+              const SizedBox(height: 15),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {},
+                  child: const Text("Forgot Password?"),
+                ),
+              ),
+              const SizedBox(height: 25),
+              _animatedButton(context),
+              const SizedBox(height: 20),
+              Divider(color: Colors.grey.shade300),
+              const SizedBox(height: 12),
+              Text("Quick Demo", style: TextStyle(color: Colors.grey.shade700)),
+              const SizedBox(height: 12),
+              Row(
                 children: [
-                  SizedBox(
-                    width: double.infinity,
+                  Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        _emailController.text = 'admin@demo.com';
-                        _passwordController.text = 'demo123';
+                        _emailCtrl.text = "admin@demo.com";
+                        _passCtrl.text = "demo123";
                       },
-                      child: const Text('Admin Demo'),
+                      child: const Text("Admin"),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
+                  const SizedBox(width: 10),
+                  Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        _emailController.text = 'employee@demo.com';
-                        _passwordController.text = 'demo123';
+                        _emailCtrl.text = "employee@demo.com";
+                        _passCtrl.text = "demo123";
                       },
-                      child: const Text('Employee Demo'),
+                      child: const Text("Employee"),
                     ),
                   ),
                 ],
               )
-            : Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        _emailController.text = 'admin@demo.com';
-                        _passwordController.text = 'demo123';
-                      },
-                      child: const Text('Admin'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        _emailController.text = 'employee@demo.com';
-                        _passwordController.text = 'demo123';
-                      },
-                      child: const Text('Employee'),
-                    ),
-                  ),
-                ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ----- Nice Button with simple animation -----
+  Widget _animatedButton(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          if (_formKey.currentState!.validate()) {
+            context
+                .read<AuthCubit>()
+                .signIn(email: _emailCtrl.text, password: _passCtrl.text);
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 50,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: const LinearGradient(
+              colors: [Color(0xff222DFF), Color(0xff0D47A1)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 6,
+                offset: const Offset(0, 4),
               ),
-        ],
+            ],
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            "Sign In",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }

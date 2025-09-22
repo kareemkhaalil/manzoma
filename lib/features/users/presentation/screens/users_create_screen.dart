@@ -413,6 +413,8 @@ class _UsersCreateScreenState extends State<UsersCreateScreen> {
       case UserRole.superAdmin:
         return 'مدير عام';
       case UserRole.cad:
+        return 'مدير ';
+      case UserRole.branchManager:
         return 'مدير فرع';
       case UserRole.employee:
         return 'موظف';

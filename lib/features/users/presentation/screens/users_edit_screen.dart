@@ -374,6 +374,8 @@ class _UsersEditScreenState extends State<UsersEditScreen> {
       case UserRole.superAdmin:
         return 'مدير عام';
       case UserRole.cad:
+        return 'مدير ';
+      case UserRole.branchManager:
         return 'مدير فرع';
       case UserRole.employee:
         return 'موظف';
