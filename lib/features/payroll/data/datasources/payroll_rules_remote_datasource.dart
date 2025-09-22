@@ -22,7 +22,7 @@
 //           .from('payroll_rules')
 //           .insert(rule.toJson())
 //           .select()
-//           .single();
+//           .maybeSingle();
 //       return PayrollRuleModel.fromJson(response);
 //     } on PostgrestException catch (e) {
 //       throw ServerException(
@@ -66,7 +66,7 @@
 //           .update(data)
 //           .eq('id', ruleId)
 //           .select()
-//           .single();
+//           .maybeSingle();
 //       return PayrollRuleModel.fromJson(response);
 //     } on PostgrestException catch (e) {
 //       throw ServerException(
@@ -106,8 +106,8 @@ class PayrollRulesRemoteDataSourceImpl implements PayrollRulesRemoteDataSource {
         .from('payroll_rules')
         .insert(rule.toJson())
         .select()
-        .single();
-    return PayrollRuleModel.fromJson(response);
+        .maybeSingle();
+    return PayrollRuleModel.fromJson(response!);
   }
 
   @override
@@ -117,8 +117,8 @@ class PayrollRulesRemoteDataSourceImpl implements PayrollRulesRemoteDataSource {
         .update(rule.toJson())
         .eq('id', rule.id)
         .select()
-        .single();
-    return PayrollRuleModel.fromJson(response);
+        .maybeSingle();
+    return PayrollRuleModel.fromJson(response!);
   }
 
   @override
