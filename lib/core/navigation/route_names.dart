@@ -12,6 +12,7 @@ class RouteNames {
   static const String attendance = '/attendance';
   static const String attendanceHistory = '/attendance/history';
   static const String attendanceReport = '/attendance/report';
+  static const String attendanceDashboard = '/attendance/dashboard';
 
   // Payroll Routes
   static const String payroll = '/payroll';

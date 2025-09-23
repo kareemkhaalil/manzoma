@@ -7,6 +7,7 @@ const Map<String, Map<String, String>> _extraLocalizedValues = {
     // Navigation
     'nav_dashboard': 'Dashboard',
     'nav_attendance': 'Attendance',
+    'nav_attendance_dashboard': 'Attendance Dashboard',
     'nav_attendance_check': 'Check In/Out',
     'nav_attendance_history': 'Attendance History',
     'nav_attendance_reports': 'Attendance Reports',
@@ -37,6 +38,7 @@ const Map<String, Map<String, String>> _extraLocalizedValues = {
     // Navigation (Arabic)
     'nav_dashboard': 'لوحة التحكم',
     'nav_attendance': 'الحضور',
+    'nav_attendance_dashboard': 'لوحة الحضور',
     'nav_attendance_check': 'تسجيل دخول/خروج',
     'nav_attendance_history': 'سجل الحضور',
     'nav_attendance_reports': 'تقارير الحضور',

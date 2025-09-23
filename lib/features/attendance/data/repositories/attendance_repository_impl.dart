@@ -123,6 +123,37 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     }
   }
 
+  // create getAttendanceHistoryByTenant
+  @override
+  Future<Either<Failure, List<AttendanceEntity>>> getAttendanceHistoryByTenant({
+    required String tenantId,
+    int? limit,
+    int? offset,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final attendanceList =
+            await remoteDataSource.getAttendanceHistoryByTenant(
+          tenantId: tenantId,
+          limit: limit,
+          offset: offset,
+        );
+        print('[DEBUG] attendanceList: $attendanceList');
+        return Right(attendanceList);
+      } on ServerException catch (e) {
+        print('[DEBUG] ServerException: ${e.message}');
+        return Left(ServerFailure(
+          message: e.message,
+          statusCode: e.statusCode,
+        ));
+      }
+    } else {
+      return const Left(NetworkFailure(
+        message: 'لا يوجد اتصال بالإنترنت',
+      ));
+    }
+  }
+
   @override
   Future<Either<Failure, List<AttendanceEntity>>> getAllAttendance({
     DateTime? date,

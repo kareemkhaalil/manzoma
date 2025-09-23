@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:manzoma/features/attendance/domain/usecases/get_attendance_history_tennent_usecase.dart';
 import '../../../../core/error/failures.dart';
 import '../entities/attendance_entity.dart';
 
@@ -23,6 +24,11 @@ abstract class AttendanceRepository {
     required String userId,
     DateTime? startDate,
     DateTime? endDate,
+    int? limit,
+    int? offset,
+  });
+  Future<Either<Failure, List<AttendanceEntity>>> getAttendanceHistoryByTenant({
+    required String tenantId,
     int? limit,
     int? offset,
   });

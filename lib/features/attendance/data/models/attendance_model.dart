@@ -4,6 +4,7 @@ class AttendanceModel extends AttendanceEntity {
   const AttendanceModel({
     required super.id,
     required super.userId,
+    required super.userName,
     required super.date,
     super.checkInTime,
     super.checkOutTime,
@@ -21,6 +22,7 @@ class AttendanceModel extends AttendanceEntity {
     return AttendanceModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
+      userName: json['user_name'] as String,
       date: DateTime.parse(json['date'] as String),
       checkInTime: json['check_in_time'] != null
           ? DateTime.parse(json['check_in_time'] as String)
@@ -65,6 +67,7 @@ class AttendanceModel extends AttendanceEntity {
   AttendanceModel copyWith({
     String? id,
     String? userId,
+    String? userName,
     DateTime? date,
     DateTime? checkInTime,
     DateTime? checkOutTime,
@@ -79,6 +82,7 @@ class AttendanceModel extends AttendanceEntity {
     return AttendanceModel(
       id: id ?? this.id,
       userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
       date: date ?? this.date,
       checkInTime: checkInTime ?? this.checkInTime,
       checkOutTime: checkOutTime ?? this.checkOutTime,

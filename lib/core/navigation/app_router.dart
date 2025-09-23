@@ -5,6 +5,7 @@ import 'package:manzoma/core/enums/user_role.dart';
 import 'package:manzoma/core/localization/app_localizations.dart';
 import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
 import 'package:manzoma/core/storage/shared_pref_helper.dart';
+import 'package:manzoma/features/attendance/presentation/screens/attendance_dashboard_screen.dart';
 import 'package:manzoma/features/branches/domain/entities/branch_entity.dart';
 import 'package:manzoma/features/branches/presentation/screens/branches_edit_screen.dart';
 import 'package:manzoma/features/employee/presentation/screens/attendance_screen.dart';
@@ -100,8 +101,13 @@ class AppRouter {
       GoRoute(
         path: RouteNames.attendance,
         name: 'attendance',
+        builder: (context, state) => MainAppShell(child: AttendanceScreen()),
+      ),
+      GoRoute(
+        path: RouteNames.attendanceDashboard,
+        name: 'attendanceDashboard',
         builder: (context, state) =>
-            const MainAppShell(child: AttendanceScreen()),
+            const MainAppShell(child: AttendanceDashboardPage()),
       ),
 
       // Payroll Routes
