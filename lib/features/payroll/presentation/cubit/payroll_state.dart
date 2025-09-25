@@ -12,6 +12,7 @@ class PayrollState extends Equatable {
   final List<PayrollDetailEntity> details;
   final List<PayrollRuleEntity> rules;
   final String? errorMessage;
+  final String? message; // 👈 جديد
 
   const PayrollState({
     this.status = PayrollStatus.initial,
@@ -20,6 +21,7 @@ class PayrollState extends Equatable {
     this.details = const [],
     this.rules = const [],
     this.errorMessage,
+    this.message, // 👈 جديد
   });
 
   PayrollState copyWith({
@@ -29,6 +31,7 @@ class PayrollState extends Equatable {
     List<PayrollDetailEntity>? details,
     List<PayrollRuleEntity>? rules,
     String? errorMessage,
+    String? message,
   }) {
     return PayrollState(
       status: status ?? this.status,
@@ -37,10 +40,18 @@ class PayrollState extends Equatable {
       details: details ?? this.details,
       rules: rules ?? this.rules,
       errorMessage: errorMessage,
+      message: message, // 👈 جديد
     );
   }
 
   @override
-  List<Object?> get props =>
-      [status, payrolls, selectedPayroll, details, rules, errorMessage];
+  List<Object?> get props => [
+        status,
+        payrolls,
+        selectedPayroll,
+        details,
+        rules,
+        errorMessage,
+        message
+      ];
 }

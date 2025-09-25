@@ -53,6 +53,15 @@ class RoleBasedNavigation {
           ],
         ),
         NavigationItem(
+          titleKey: 'nav_attendance_rules',
+          route: '/attendance/rules',
+          icon: Icons.rule,
+          allowedRoles: [
+            UserRole.superAdmin,
+            UserRole.cad,
+          ],
+        ),
+        NavigationItem(
           titleKey: 'nav_attendance_reports',
           route: '/attendance/report',
           icon: Icons.assessment,

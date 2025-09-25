@@ -6,10 +6,12 @@ import 'package:manzoma/core/localization/app_localizations.dart';
 import 'package:manzoma/core/localization/cubit/locale_cubit.dart';
 import 'package:manzoma/core/storage/shared_pref_helper.dart';
 import 'package:manzoma/features/attendance/presentation/screens/attendance_dashboard_screen.dart';
+import 'package:manzoma/features/attendance/presentation/screens/attendance_rule_screen.dart';
 import 'package:manzoma/features/branches/domain/entities/branch_entity.dart';
 import 'package:manzoma/features/branches/presentation/screens/branches_edit_screen.dart';
 import 'package:manzoma/features/employee/presentation/screens/attendance_screen.dart';
 import 'package:manzoma/features/employee/presentation/screens/employee_home_screen.dart';
+import 'package:manzoma/features/payroll/domain/entities/payroll_entity.dart';
 import 'package:manzoma/features/payroll/presentation/screens/employee_salary_screen.dart';
 import 'package:manzoma/features/payroll/presentation/screens/payroll_rules_screen.dart';
 import 'package:manzoma/features/users/presentation/screens/users_edit_screen.dart';
@@ -110,6 +112,13 @@ class AppRouter {
             const MainAppShell(child: AttendanceDashboardPage()),
       ),
 
+      GoRoute(
+        path: RouteNames.attendanceRule,
+        name: 'attendanceRule',
+        builder: (context, state) =>
+            const MainAppShell(child: AttendanceRulesPage()),
+      ),
+
       // Payroll Routes
       GoRoute(
         path: RouteNames.payroll,
@@ -119,14 +128,24 @@ class AppRouter {
       GoRoute(
         path: RouteNames.payrollSettings,
         name: 'payrollRules',
-        builder: (context, state) =>
-            const MainAppShell(child: PayrollRulesScreen()),
+        builder: (context, state) => MainAppShell(child: PayrollRulesScreen()),
       ),
       GoRoute(
         path: RouteNames.employeeSalary,
         name: 'employeeSalary',
-        builder: (context, state) =>
-            const MainAppShell(child: EmployeeSalaryScreen()),
+        builder: (context, state) {
+          final payroll = state.extra;
+          if (payroll is! PayrollEntity) {
+            return const Scaffold(
+              body: Center(child: Text("Payroll data is missing ❌")),
+            );
+          }
+          return const MainAppShell(
+            child: EmployeeSalaryScreen(
+              payrollId: '',
+            ),
+          );
+        },
       ),
 
       // Clients Routes (Super Admin only)
